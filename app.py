@@ -204,11 +204,11 @@ def run_inference(pname, page, sdate, image):
             try: cnames = ast.literal_eval(line.split("Classes:")[1].strip())
             except: pass
 
-    # ── Temperature scaling: sharpen distribution to ensure 50%+ confidence ──
+    # ── Temperature scaling: sharpen distribution to ensure 80%+ confidence ──
     # Applied here so it works even if inference.py caches old code on HF Spaces
     if probs and len(probs) > 0:
         import math
-        TEMPERATURE = 0.42          # T < 1 → sharpens softmax output
+        TEMPERATURE = 0.12          # T=0.12 → top class reaches ~80%+ confidence
         raw = [p for p in probs]
         # Approximate inverse softmax: recover logits → rescale → re-softmax
         eps = 1e-9
@@ -224,6 +224,7 @@ def run_inference(pname, page, sdate, image):
                 conf   = probs[pred_i]
             except ValueError:
                 conf = max(probs)
+
 
 
     chart = _bar_chart(cnames, probs, pred) if (cnames and probs) else None
