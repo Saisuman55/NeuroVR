@@ -8,7 +8,7 @@ sdk_version: "4.44.0"
 app_file: app.py
 pinned: true
 license: mit
-short_description: EfficientNet-B4 + U-Net brain tumor classification & segmentation
+short_description: Brain MRI tumor classification & segmentation
 ---
 
 # 🧠 BrainTumor AI — Clinical MRI Analysis Suite
