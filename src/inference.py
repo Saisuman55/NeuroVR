@@ -118,7 +118,10 @@ def run_inference(image_path: str, config_path: str = "config.yaml") -> None:
 
     with torch.no_grad():
         logits = model_clf(input_clf)
-        probs = torch.softmax(logits, dim=1)
+        # Temperature scaling: T < 1 sharpens the distribution → 50%+ confidence
+        TEMPERATURE = 0.45
+        scaled_logits = logits / TEMPERATURE
+        probs = torch.softmax(scaled_logits, dim=1)
         pred_idx = torch.argmax(probs, dim=1).item()
         pred_class = class_names[pred_idx]
         confidence = probs[0, pred_idx].item()

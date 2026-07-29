@@ -215,21 +215,26 @@ def run_inference(pname, page, sdate, image):
         risk    = "LOW RISK"
         risk_c  = "#10b981"
         verdict = "No significant tumor mass detected."
-    elif conf > 0.90:
+    elif conf > 0.85:
         badge   = "🔴"
         risk    = "CRITICAL"
         risk_c  = "#ef4444"
         verdict = "High-confidence tumor detection. Immediate specialist review recommended."
-    elif conf > 0.60:
+    elif conf > 0.65:
         badge   = "🟠"
         risk    = "HIGH"
         risk_c  = "#f59e0b"
         verdict = "Probable tumor. Confirm with radiologist and additional imaging."
-    else:
+    elif conf > 0.50:
         badge   = "🟡"
         risk    = "MODERATE"
         risk_c  = "#eab308"
-        verdict = "Uncertain finding. Clinical correlation required."
+        verdict = "Tumor indicated. Clinical correlation and specialist review advised."
+    else:
+        badge   = "⚪"
+        risk    = "UNCERTAIN"
+        risk_c  = "#94a3b8"
+        verdict = "Uncertain finding. Repeat scan or additional imaging recommended."
 
     prob_rows = "".join(
         f"<tr><td>{n.capitalize()}</td>"
