@@ -7,9 +7,6 @@ Runs the full inference pipeline (EfficientNet-B4 + U-Net) and displays
 
 import os
 import subprocess
-import base64
-import tempfile
-from io import BytesIO
 from PIL import Image
 
 import gradio as gr
@@ -18,17 +15,12 @@ import gradio as gr
 import download_models  # noqa: F401 — runs download logic on import
 
 
-# ─── Helpers ─────────────────────────────────────────────────────────────────
-PRED_DIR = os.path.join("outputs", "predictions")
+# ─── Paths ───────────────────────────────────────────────────────────────────
+PRED_DIR   = os.path.join("outputs", "predictions")
 UPLOAD_DIR = os.path.join("outputs", "uploads")
 
 
-def _b64_to_pil(b64_str: str) -> Image.Image | None:
-    if not b64_str:
-        return None
-    return Image.open(BytesIO(base64.b64decode(b64_str)))
-
-
+# ─── Helpers ─────────────────────────────────────────────────────────────────
 def _read_img(filename: str) -> Image.Image | None:
     path = os.path.join(PRED_DIR, filename)
     if os.path.exists(path):
@@ -46,7 +38,7 @@ def run_inference(image: Image.Image):
         return [None] * 5 + ["⚠️ Please upload an MRI image first."]
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    os.makedirs(PRED_DIR, exist_ok=True)
+    os.makedirs(PRED_DIR,   exist_ok=True)
 
     # Save uploaded image to temp file
     tmp_path = os.path.join(UPLOAD_DIR, "temp_inference.jpg")
@@ -64,17 +56,16 @@ def run_inference(image: Image.Image):
         stderr = result.stderr
 
         if result.returncode != 0:
-            return [None] * 5 + [f"❌ Inference failed:\n\n{stderr}"]
+            return [None] * 5 + [f"❌ Inference failed:\n\n```\n{stderr}\n```"]
 
     except subprocess.TimeoutExpired:
-        return [None] * 5 + ["⏱️ Inference timed out (>120s). Model may not be loaded."]
+        return [None] * 5 + ["⏱️ Inference timed out (>120s). Model may not be loaded yet."]
     except Exception as e:
         return [None] * 5 + [f"❌ Error: {e}"]
 
     # Parse classification output
-    pred_class = "Unknown"
-    confidence = 0.0
-    probs_text = ""
+    pred_class  = "Unknown"
+    confidence  = 0.0
 
     for line in stdout.split("\n"):
         if "Predicted class:" in line:
@@ -84,15 +75,14 @@ def run_inference(image: Image.Image):
                 confidence = float(parts.split("confidence:")[1].replace(")", "").strip())
             except Exception:
                 pass
-        elif "Probabilities:" in line:
-            probs_text = line.split("Probabilities:")[1].strip()
 
-    # Build summary text
-    severity = (
-        "🔴 CRITICAL" if confidence > 0.95 and pred_class != "NOTUMOR"
-        else "🟠 HIGH" if pred_class not in ("NOTUMOR", "Unknown")
-        else "🟢 CLEAR"
-    )
+    # Build severity indicator
+    if pred_class == "NOTUMOR":
+        severity = "🟢 CLEAR — No tumor detected"
+    elif confidence > 0.95:
+        severity = "🔴 CRITICAL — High confidence tumor"
+    else:
+        severity = "🟠 HIGH — Tumor likely, confirm with specialist"
 
     summary = (
         f"## 🧠 Diagnosis Result\n\n"
@@ -102,25 +92,24 @@ def run_inference(image: Image.Image):
         f"| **Confidence** | `{confidence * 100:.1f}%` |\n"
         f"| **Severity** | {severity} |\n"
         f"| **Model** | EfficientNet-B4 + U-Net/ResNet34 |\n\n"
-        f"*This is an automated AI result. Not for clinical diagnosis.*"
+        f"*⚠️ This is an automated AI result. Not for clinical diagnosis.*"
     )
 
     # Load the 5 output images
-    original  = _read_img("original.png")
-    mask      = _read_img("binary_mask.png")
-    overlay   = _read_img("green_overlay.png")
-    contour   = _read_img("contour.png")
-    heatmap   = _read_img("heatmap.png")
+    original = _read_img("original.png")
+    mask     = _read_img("binary_mask.png")
+    overlay  = _read_img("green_overlay.png")
+    contour  = _read_img("contour.png")
+    heatmap  = _read_img("heatmap.png")
 
     return original, mask, overlay, contour, heatmap, summary
 
 
 # ─── Gradio UI ───────────────────────────────────────────────────────────────
 CSS = """
-#title { text-align: center; }
+#title    { text-align: center; }
 #subtitle { text-align: center; color: #94a3b8; margin-bottom: 1rem; }
-.result-gallery img { border-radius: 8px; }
-footer { display: none !important; }
+footer    { display: none !important; }
 """
 
 with gr.Blocks(
@@ -150,30 +139,20 @@ with gr.Blocks(
             )
             run_btn = gr.Button("🔬 Run Analysis", variant="primary", size="lg")
 
-            gr.Markdown("### 🖼️ Quick Test Samples")
-            gr.Examples(
-                examples=[
-                    ["test_samples/glioma_Te-gl_1.jpg"],
-                    ["test_samples/meningioma_Te-aug-me_1.jpg"],
-                    ["test_samples/notumor_Te-no_1.jpg"],
-                    ["test_samples/pituitary_Te-pi_1.jpg"],
-                ],
-                inputs=inp,
-                label="Click to load a sample",
-            )
-
         with gr.Column(scale=2):
-            result_text = gr.Markdown("*Upload an MRI and click **Run Analysis** to see results.*")
+            result_text = gr.Markdown(
+                "*Upload an MRI scan and click **Run Analysis** to see results.*"
+            )
 
     gr.Markdown("---")
     gr.Markdown("### 📊 Segmentation Output Gallery")
 
-    with gr.Row(elem_classes="result-gallery"):
-        out_original = gr.Image(label="Original MRI",    show_label=True, height=220)
-        out_mask     = gr.Image(label="Binary Mask",     show_label=True, height=220)
-        out_overlay  = gr.Image(label="Green Overlay",   show_label=True, height=220)
-        out_contour  = gr.Image(label="Contour",         show_label=True, height=220)
-        out_heatmap  = gr.Image(label="Probability Heatmap", show_label=True, height=220)
+    with gr.Row():
+        out_original = gr.Image(label="Original MRI",         show_label=True, height=220)
+        out_mask     = gr.Image(label="Binary Mask",          show_label=True, height=220)
+        out_overlay  = gr.Image(label="Green Overlay",        show_label=True, height=220)
+        out_contour  = gr.Image(label="Contour",              show_label=True, height=220)
+        out_heatmap  = gr.Image(label="Probability Heatmap",  show_label=True, height=220)
 
     run_btn.click(
         fn=run_inference,
@@ -192,4 +171,10 @@ with gr.Blocks(
 
 # ─── Launch ──────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    # HF Spaces sets PORT env var; locally defaults to 7860
+    port = int(os.environ.get("PORT", 7860))
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=port,
+        show_error=True,
+    )
