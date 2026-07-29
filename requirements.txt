@@ -29,7 +29,9 @@ flask>=2.3.0
 reportlab>=4.0.0
 
 # Hugging Face Hub (model weight download at startup)
-huggingface_hub>=0.20.0
+# Note: version is managed by gradio's dependency resolver — do not pin separately
+huggingface_hub>=0.19.3,<0.25.0
 
 # Web interface — Gradio (Hugging Face Spaces free tier)
-gradio>=4.0.0
+# 4.44.1 = last stable 4.x without HfFolder dependency conflict
+gradio==4.44.1
