@@ -28,6 +28,8 @@ flask>=2.3.0
 # PDF report generation
 reportlab>=4.0.0
 
-# NOTE: gradio and huggingface_hub are managed by HF Spaces runtime.
-# Do NOT add them here — HF pre-installs gradio[oauth]==4.44.0 and huggingface-hub>=0.30
-# Adding them causes version conflicts with the HF base image.
+# HF Spaces forces gradio[oauth]==4.44.0 which imports HfFolder from huggingface_hub.
+# HfFolder was removed in huggingface_hub>=0.25.0, so we pin it below that.
+# pip resolves this to 0.24.7 (compatible with datasets and gradio).
+# Do NOT add a gradio version here — HF Spaces forces its own version.
+huggingface_hub>=0.19.3,<0.25.0
