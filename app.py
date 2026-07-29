@@ -53,6 +53,7 @@ try:
 except Exception as _e:
     print(f"[patch2] starlette patch skipped: {_e}")
 
+import spaces          # noqa: E402 — HF Spaces ZeroGPU support
 import gradio as gr  # noqa: E402 — must come after patch
 
 # ─── Model weight download at startup ────────────────────────────────────────
@@ -73,6 +74,7 @@ def _read_img(filename: str):
 
 
 # ─── Core inference function ─────────────────────────────────────────────────
+@spaces.GPU
 def run_inference(image):
     """Accepts a PIL image, runs the ML pipeline, returns 5 images + summary."""
     if image is None:
