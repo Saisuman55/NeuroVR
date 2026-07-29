@@ -1,6 +1,19 @@
+---
+title: NeuroVR — BrainTumor AI
+emoji: 🧠
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: true
+license: mit
+short_description: EfficientNet-B4 + U-Net brain tumor classification & segmentation
+---
+
 # 🧠 BrainTumor AI — Clinical MRI Analysis Suite
 
 > End-to-end PyTorch pipeline for brain MRI **classification** and pixel-level **segmentation**, served through a modern clinical web dashboard.
+
 
 ---
 

@@ -27,3 +27,6 @@ flask>=2.3.0
 
 # PDF report generation
 reportlab>=4.0.0
+
+# Hugging Face Hub (model weight download at startup)
+huggingface_hub>=0.20.0
