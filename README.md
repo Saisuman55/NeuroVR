@@ -350,3 +350,64 @@ This project is for **educational and research purposes only** and is not intend
 Datasets are sourced from Kaggle and are subject to their respective licenses:
 - [Brain Tumor MRI Dataset License](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset)
 - [LGG MRI Segmentation License](https://www.kaggle.com/datasets/mateuszbuda/lgg-mri-segmentation)
+
+---
+
+## 📚 References
+
+All models, architectures, loss functions, augmentations, and datasets in this project are based on the following papers:
+
+### Model Architectures
+
+**[1] EfficientNet** — Classification backbone  
+Tan, M., & Le, Q. V. (2019).  
+*EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks.*  
+ICML 2019. https://arxiv.org/abs/1905.11946
+
+**[2] U-Net** — Segmentation architecture  
+Ronneberger, O., Fischer, P., & Brox, T. (2015).  
+*U-Net: Convolutional Networks for Biomedical Image Segmentation.*  
+MICCAI 2015. https://arxiv.org/abs/1505.04597
+
+**[3] ResNet** — U-Net encoder backbone  
+He, K., Zhang, X., Ren, S., & Sun, J. (2016).  
+*Deep Residual Learning for Image Recognition.*  
+CVPR 2016. https://arxiv.org/abs/1512.03385
+
+### Loss Functions & Metrics
+
+**[4] Dice Loss** — Combined BCE + Dice segmentation loss  
+Milletari, F., Navab, N., & Ahmadi, S. A. (2016).  
+*V-Net: Fully Convolutional Neural Networks for Volumetric Medical Image Segmentation.*  
+3DV 2016. https://arxiv.org/abs/1606.04797
+
+**[5] Label Smoothing** — Used in classifier cross-entropy  
+Szegedy, C., Vanhoucke, V., Ioffe, S., Shlens, J., & Wojna, Z. (2016).  
+*Rethinking the Inception Architecture for Computer Vision.*  
+CVPR 2016. https://arxiv.org/abs/1512.00567
+
+### Transfer Learning
+
+**[6] ImageNet Pretraining** — Pretrained weights for EfficientNet & ResNet encoders  
+Deng, J., Dong, W., Socher, R., Li, L. J., Li, K., & Fei-Fei, L. (2009).  
+*ImageNet: A Large-Scale Hierarchical Image Database.*  
+CVPR 2009. https://ieeexplore.ieee.org/document/5206848
+
+### Data Augmentation
+
+**[7] Albumentations** — Fast image augmentation library used throughout  
+Buslaev, A., Iglovikov, V. I., Khvedchenya, E., Parinov, A., Druzhinin, M., & Kalinin, A. A. (2020).  
+*Albumentations: Fast and Flexible Image Augmentations.*  
+Information 2020. https://arxiv.org/abs/1809.06839
+
+### Datasets
+
+**[8] LGG MRI Segmentation Dataset** — Segmentation training data  
+Buda, M., Saha, A., & Mazurowski, M. A. (2019).  
+*Association of Genomic Subtypes of Lower-Grade Gliomas with Shape Features Automatically Extracted by a Deep Learning Algorithm.*  
+Computers in Biology and Medicine, 109. https://doi.org/10.1016/j.compbiomed.2019.05.002
+
+**[9] Brain Tumor MRI Dataset** — Classification training data  
+Nickparvar, M. (2021).  
+*Brain Tumor MRI Dataset.*  
+Kaggle. https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset
