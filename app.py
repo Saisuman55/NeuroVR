@@ -86,34 +86,41 @@ def run_inference(image):
     image.save(tmp_path, format="JPEG", quality=95)
 
     try:
-        # Import and call inference directly in this process (GPU context is shared)
+        import io
+        import contextlib
         from inference import run_inference as _infer
-        _infer(tmp_path, CONFIG)
+
+        # Capture stdout — inference prints "Predicted class: X (confidence: Y)"
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            _infer(tmp_path, CONFIG)
+        output = buf.getvalue()
+        print(output)  # still log to real stdout for debugging
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
         return [None] * 5 + [f"❌ Inference error:\n\n```\n{tb}\n```"]
 
-    # ─── Parse classification output from saved files ─────────────────────────
+    # ─── Parse classification from captured stdout ────────────────────────────
     pred_class = "Unknown"
     confidence = 0.0
-    result_txt = os.path.join(PRED_DIR, "inference_result.txt")
-    if os.path.exists(result_txt):
-        with open(result_txt) as f:
-            for line in f:
-                if "Predicted class:" in line:
-                    parts = line.split("Predicted class:")[1].strip()
-                    pred_class = parts.split("(")[0].strip().upper()
-                    try:
-                        confidence = float(
-                            parts.split("confidence:")[1].replace(")", "").strip()
-                        )
-                    except Exception:
-                        pass
-
-    # Fallback: read stdout printed by inference (captured via print redirect)
-    # The run_inference function prints: "Predicted class: glioma (confidence: 0.9932)"
-    # We rely on the files saved to PRED_DIR for classification + segmentation results.
+    for line in output.split("\n"):
+        if "Overridden Predicted class:" in line:
+            # Cross-check override takes priority
+            parts = line.split("Overridden Predicted class:")[1].strip()
+            pred_class = parts.split("(")[0].strip().upper()
+            try:
+                confidence = float(parts.split("confidence:")[1].replace(")", "").strip())
+            except Exception:
+                pass
+            break
+        if "Predicted class:" in line and pred_class == "Unknown":
+            parts = line.split("Predicted class:")[1].strip()
+            pred_class = parts.split("(")[0].strip().upper()
+            try:
+                confidence = float(parts.split("confidence:")[1].replace(")", "").strip())
+            except Exception:
+                pass
 
     if pred_class == "NOTUMOR":
         severity = "🟢 CLEAR — No tumor detected"
