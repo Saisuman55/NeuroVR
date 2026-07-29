@@ -9,7 +9,27 @@ import os
 import subprocess
 from PIL import Image
 
-import gradio as gr
+# ─── Patch gradio_client bug BEFORE importing gradio ─────────────────────────
+# Bug: gradio_client/utils.py _json_schema_to_python_type() receives a boolean
+# schema (valid JSON Schema: True/False) and then calls get_type(schema) which
+# does `if "const" in schema` — TypeError when schema is bool, not dict.
+# This was fixed in gradio_client > 0.6.1 but HF Spaces uses the buggy version.
+try:
+    import gradio_client.utils as _gc_utils
+
+    _orig = _gc_utils._json_schema_to_python_type
+
+    def _patched(schema, defs=None):
+        if not isinstance(schema, dict):
+            return "Any"
+        return _orig(schema, defs)
+
+    _gc_utils._json_schema_to_python_type = _patched
+    print("[patch] gradio_client bool-schema bug patched ✔")
+except Exception as _e:
+    print(f"[patch] gradio_client patch skipped: {_e}")
+
+import gradio as gr  # noqa: E402 — must come after patch
 
 # ─── Model weight download at startup ────────────────────────────────────────
 import download_models  # noqa: F401 — runs download logic on import
@@ -21,7 +41,7 @@ UPLOAD_DIR = os.path.join("outputs", "uploads")
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
-def _read_img(filename: str) -> Image.Image | None:
+def _read_img(filename: str):
     path = os.path.join(PRED_DIR, filename)
     if os.path.exists(path):
         return Image.open(path).copy()
@@ -29,22 +49,17 @@ def _read_img(filename: str) -> Image.Image | None:
 
 
 # ─── Core inference function ─────────────────────────────────────────────────
-def run_inference(image: Image.Image):
-    """
-    Accepts a PIL image from Gradio, runs the ML pipeline,
-    returns 5 result images + a text summary.
-    """
+def run_inference(image):
+    """Accepts a PIL image, runs the ML pipeline, returns 5 images + summary."""
     if image is None:
         return [None] * 5 + ["⚠️ Please upload an MRI image first."]
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(PRED_DIR,   exist_ok=True)
 
-    # Save uploaded image to temp file
     tmp_path = os.path.join(UPLOAD_DIR, "temp_inference.jpg")
     image.save(tmp_path, format="JPEG", quality=95)
 
-    # Run inference script
     try:
         result = subprocess.run(
             ["python3", "src/inference.py", "--image", tmp_path],
@@ -59,13 +74,13 @@ def run_inference(image: Image.Image):
             return [None] * 5 + [f"❌ Inference failed:\n\n```\n{stderr}\n```"]
 
     except subprocess.TimeoutExpired:
-        return [None] * 5 + ["⏱️ Inference timed out (>120s). Model may not be loaded yet."]
+        return [None] * 5 + ["⏱️ Inference timed out (>120s)."]
     except Exception as e:
         return [None] * 5 + [f"❌ Error: {e}"]
 
     # Parse classification output
-    pred_class  = "Unknown"
-    confidence  = 0.0
+    pred_class = "Unknown"
+    confidence = 0.0
 
     for line in stdout.split("\n"):
         if "Predicted class:" in line:
@@ -76,7 +91,6 @@ def run_inference(image: Image.Image):
             except Exception:
                 pass
 
-    # Build severity indicator
     if pred_class == "NOTUMOR":
         severity = "🟢 CLEAR — No tumor detected"
     elif confidence > 0.95:
@@ -92,17 +106,17 @@ def run_inference(image: Image.Image):
         f"| **Confidence** | `{confidence * 100:.1f}%` |\n"
         f"| **Severity** | {severity} |\n"
         f"| **Model** | EfficientNet-B4 + U-Net/ResNet34 |\n\n"
-        f"*⚠️ This is an automated AI result. Not for clinical diagnosis.*"
+        f"*⚠️ AI result only — not for clinical diagnosis.*"
     )
 
-    # Load the 5 output images
-    original = _read_img("original.png")
-    mask     = _read_img("binary_mask.png")
-    overlay  = _read_img("green_overlay.png")
-    contour  = _read_img("contour.png")
-    heatmap  = _read_img("heatmap.png")
-
-    return original, mask, overlay, contour, heatmap, summary
+    return (
+        _read_img("original.png"),
+        _read_img("binary_mask.png"),
+        _read_img("green_overlay.png"),
+        _read_img("contour.png"),
+        _read_img("heatmap.png"),
+        summary,
+    )
 
 
 # ─── Gradio UI ───────────────────────────────────────────────────────────────
@@ -125,18 +139,14 @@ with gr.Blocks(
 
     gr.Markdown("# 🧠 NeuroVR — BrainTumor AI", elem_id="title")
     gr.Markdown(
-        "Upload a brain MRI scan · Get instant tumor classification & pixel-level segmentation",
+        "Upload a brain MRI scan · Get instant tumor classification & segmentation",
         elem_id="subtitle",
     )
 
     with gr.Row():
         with gr.Column(scale=1):
-            inp = gr.Image(
-                type="pil",
-                label="📤 Upload MRI Scan",
-                sources=["upload"],
-                height=300,
-            )
+            inp = gr.Image(type="pil", label="📤 Upload MRI Scan",
+                           sources=["upload"], height=300)
             run_btn = gr.Button("🔬 Run Analysis", variant="primary", size="lg")
 
         with gr.Column(scale=2):
@@ -148,11 +158,11 @@ with gr.Blocks(
     gr.Markdown("### 📊 Segmentation Output Gallery")
 
     with gr.Row():
-        out_original = gr.Image(label="Original MRI",         show_label=True, height=220)
-        out_mask     = gr.Image(label="Binary Mask",          show_label=True, height=220)
-        out_overlay  = gr.Image(label="Green Overlay",        show_label=True, height=220)
-        out_contour  = gr.Image(label="Contour",              show_label=True, height=220)
-        out_heatmap  = gr.Image(label="Probability Heatmap",  show_label=True, height=220)
+        out_original = gr.Image(label="Original MRI",        show_label=True, height=220)
+        out_mask     = gr.Image(label="Binary Mask",         show_label=True, height=220)
+        out_overlay  = gr.Image(label="Green Overlay",       show_label=True, height=220)
+        out_contour  = gr.Image(label="Contour",             show_label=True, height=220)
+        out_heatmap  = gr.Image(label="Probability Heatmap", show_label=True, height=220)
 
     run_btn.click(
         fn=run_inference,
@@ -164,17 +174,12 @@ with gr.Blocks(
     gr.Markdown(
         "---\n"
         "**Models**: EfficientNet-B4 (classification) · U-Net + ResNet34 (segmentation)  \n"
-        "**Dataset**: Brain Tumor MRI (Kaggle) · LGG MRI Segmentation (Kaggle)  \n"
         "⚠️ *For educational purposes only — not a clinical diagnostic tool.*"
     )
 
 
 # ─── Launch ──────────────────────────────────────────────────────────────────
-if __name__ == "__main__":
-    # HF Spaces sets PORT env var; locally defaults to 7860
-    port = int(os.environ.get("PORT", 7860))
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=port,
-        show_error=True,
-    )
+# NOTE: launch() is called at module level (not inside __main__) so that
+# HF Spaces Gradio SDK picks it up correctly. server_name/port are required
+# for HF Spaces Docker-compat routing.
+demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
