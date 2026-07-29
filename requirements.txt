@@ -30,3 +30,6 @@ reportlab>=4.0.0
 
 # Hugging Face Hub (model weight download at startup)
 huggingface_hub>=0.20.0
+
+# Web interface — Gradio (Hugging Face Spaces free tier)
+gradio>=4.0.0
