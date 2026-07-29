@@ -1,0 +1,39 @@
+{
+  "status": "completed_below_target",
+  "phase": "Phase B – Full Unfreeze (Halted)",
+  "current_epoch": 5,
+  "total_epochs": 30,
+  "best_val_acc": 95.18,
+  "target_acc": 98.0,
+  "history": {
+    "epoch": 5,
+    "train_acc": [
+      87.2,
+      86.94,
+      87.58,
+      87.64,
+      87.7
+    ],
+    "val_acc": [
+      95.18,
+      95.18,
+      95.18,
+      95.18,
+      95.18
+    ],
+    "train_loss": [
+      0.5113,
+      0.5131,
+      0.4938,
+      0.4943,
+      0.4813
+    ],
+    "val_loss": [
+      0.3542,
+      0.3542,
+      0.3541,
+      0.3541,
+      0.3541
+    ]
+  }
+}

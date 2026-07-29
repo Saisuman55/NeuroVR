@@ -1,0 +1,81 @@
+# ─── Model Weights (large binary files) ────────────────────────────────────────
+models/**/*.pth
+models/**/*.pt
+models/**/*.h5
+models/**/*.ckpt
+# Keep directory structure
+!models/classifier/.gitkeep
+!models/segmenter/.gitkeep
+
+# ─── Datasets (too large for GitHub) ───────────────────────────────────────────
+data/classification/
+data/segmentation/
+# Keep directory structure
+!data/classification/.gitkeep
+!data/segmentation/.gitkeep
+
+# ─── Generated Outputs ──────────────────────────────────────────────────────────
+outputs/predictions/*.png
+outputs/predictions/*.jpg
+outputs/uploads/
+outputs/plots/*.png
+outputs/plots/*.jpg
+# Keep directory structure
+!outputs/predictions/.gitkeep
+!outputs/plots/.gitkeep
+!outputs/uploads/.gitkeep
+
+# ─── Python ─────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+env/
+venv/
+.venv/
+.env
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ─── Jupyter (removed but just in case) ─────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ─── macOS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ─── Windows ─────────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ─── Editors / IDEs ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── Temporary / Misc ────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+~$*.docx
+*.lock
+
+# ─── Word temp files ─────────────────────────────────────────────────────────────
+~$*.docx
+~$*.doc
+~$*.xlsx

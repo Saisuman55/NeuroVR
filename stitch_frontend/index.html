@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Home - BrainTumor AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;family=Public+Sans:wght@400;500&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {},
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    spacing: {},
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Public Sans"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    fontSize: {}
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #080d1a;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Radial Gradients Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -10%; left: -10%;
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(0,212,255,0.10) 0%, rgba(8,13,26,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: -10%; right: -10%;
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, rgba(8,13,26,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .blob-bottom {
+            position: fixed;
+            bottom: -20%; left: 25%;
+            width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(0,212,255,0.07) 0%, rgba(8,13,26,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(0,212,255,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(0,212,255,0.15);
+        }
+
+        .metric-card {
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(0,212,255,0.18);
+            border-radius: 14px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            border-color: rgba(0,212,255,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(0,212,255,0.15);
+        }
+
+        .text-gradient {
+            background-image: linear-gradient(135deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        /* Material Symbols Outline Override */
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --glass-shadow: rgba(0, 0, 0, 0.05);
+            --border-subtle: rgba(0, 0, 0, 0.1);
+            --bg-subtle: rgba(0, 0, 0, 0.05);
+            --text-muted: #64748b;
+        }
+        .dark {
+            --glass-bg: rgba(255, 255, 255, 0.035);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.3);
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --bg-subtle: rgba(255, 255, 255, 0.05);
+            --text-muted: #94a3b8;
+        }
+        .glass-card {
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 4px 6px var(--glass-shadow) !important;
+        }
+        .pdf-export {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .pdf-export .glass-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+        .pdf-export * {
+            color: #0f172a;
+        }
+        .pdf-export .text-primary { color: #0284c7 !important; }
+        .pdf-export .text-error { color: #ef4444 !important; }
+        .pdf-export .text-on-surface-variant { color: #475569 !important; }
+        .pdf-export .material-symbols-outlined { color: #475569 !important; }
+
+</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-[#080d1a] dark:text-white font-body min-h-screen transition-colors duration-300">
+<div class="blob-bottom"></div>
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar Container -->
+<!-- SideNavBar Container -->
+<aside class="w-[240px] h-screen fixed left-0 top-0 border-r border-[var(--border-subtle)] bg-[#0a1020]/80 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.3)] z-50 flex flex-col">
+<!-- Header Logo -->
+<div class="p-6 border-b border-[var(--border-subtle)]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00d4ff] to-[#7c3aed] flex items-center justify-center shadow-[0_0_15px_rgba(0,212,255,0.3)]">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M12 2C8 2 5 5 5 9c0 2 .8 3.8 2 5l-1 4h12l-1-4c1.2-1.2 2-3 2-5 0-4-3-7-7-7z"/><path d="M9 9h6M9 12h4"/></svg>
+</div>
+<div>
+<h2 class="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-[#00d4ff] to-[#7c3aed] font-display tracking-tight">BrainTumor AI</h2>
+<p class="text-[0.65rem] text-slate-400 font-mono tracking-wider mt-0.5">Clinical Suite v2.4</p>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 space-y-1 p-4">
+<!-- Active Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-white bg-[var(--bg-subtle)] border-l-2 border-[#00d4ff] transition-all duration-300 ease-in-out" href="index.html">
+<span class="material-symbols-outlined mr-3 text-[20px] text-[#00d4ff]" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-display text-sm font-bold tracking-wide">Home</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] hover:translate-x-1 group" href="training_status.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">analytics</span>
+<span class="font-display text-sm font-medium tracking-wide">Training Status</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] hover:translate-x-1 group" href="inference.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">psychology</span>
+<span class="font-display text-sm font-medium tracking-wide">Inference</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] group" href="about.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">info</span>
+<span class="font-display text-sm font-medium tracking-wide">About</span>
+</a>
+</nav>
+<!-- Footer CTA -->
+<div class="p-4 border-t border-[var(--border-subtle)] mt-auto">
+
+    <button id="themeToggle" onclick="toggleTheme()" class="w-full flex items-center justify-center gap-2 py-2 text-slate-400 hover:text-white transition-colors mb-3 rounded-lg hover:bg-[var(--bg-subtle)]">
+        <span class="material-symbols-outlined" id="themeIcon">light_mode</span>
+        <span class="font-display text-sm font-medium">Toggle Theme</span>
+    </button>
+    <button class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00d4ff]/10 to-[#7c3aed]/10 border border-[#00d4ff]/30 text-[#00d4ff] font-bold text-sm hover:shadow-[0_0_20px_rgba(0,212,255,0.2)] hover:bg-[#00d4ff]/20 hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2" onclick="window.location.href='inference.html'">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+            New Analysis
+        </button>
+</div>
+</aside>
+<!-- MAIN CONTENT -->
+<main class="ml-[240px] flex-1 h-screen overflow-y-auto overflow-x-hidden relative">
+
+<div class="p-8 md:p-12 lg:p-16 max-w-7xl mx-auto mt-16 pb-24 space-y-16 animate-fade-in-up">
+<!-- 1. HEADER SECTION & 3D BRAIN -->
+<section class="flex flex-col lg:flex-row items-center justify-between gap-12">
+<div class="space-y-6 flex-1 z-10 relative">
+<span class="inline-block px-3 py-1 rounded-full border border-[#00d4ff]/30 bg-[#00d4ff]/10 text-[#00d4ff] text-[0.65rem] font-mono tracking-widest uppercase shadow-[0_0_15px_rgba(0,212,255,0.2)]">
+                        Deep Learning Dashboard
+                    </span>
+<h1 class="font-headline font-black text-5xl md:text-6xl text-gradient tracking-tight">
+                        Brain Tumor Detection
+                    </h1>
+<p class="text-slate-400 text-lg max-w-2xl font-body leading-relaxed">
+                        AI-powered MRI analysis combining classification and pixel-level segmentation for enhanced neurological diagnostics.
+                    </p>
+</div>
+<div class="flex-1 relative h-[350px] w-full cursor-move z-10" id="brain3d-container"></div>
+</section>
+<!-- 2. TUMOR CHIPS -->
+<section>
+<div class="flex flex-wrap gap-3">
+<div class="glass-card px-4 py-2 border-red-500/20 bg-red-500/5 text-red-400 text-xs font-mono font-medium tracking-wider flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-red-500"></span> GLIOMA
+                        </div>
+<div class="glass-card px-4 py-2 border-amber-500/20 bg-amber-500/5 text-amber-400 text-xs font-mono font-medium tracking-wider flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span> MENINGIOMA
+                        </div>
+<div class="glass-card px-4 py-2 border-purple-500/20 bg-purple-500/5 text-purple-400 text-xs font-mono font-medium tracking-wider flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-purple-500"></span> PITUITARY
+                        </div>
+<div class="glass-card px-4 py-2 border-emerald-500/20 bg-emerald-500/5 text-emerald-400 text-xs font-mono font-medium tracking-wider flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span> NO TUMOR
+                        </div>
+</div>
+</section>
+<!-- 3. METRICS -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase text-slate-400 font-label tracking-wider mb-2">Accuracy Target</span>
+<div class="text-3xl font-black text-gradient mt-auto">&gt;98%</div>
+</div>
+<div class="metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase text-slate-400 font-label tracking-wider mb-2">Dice Score</span>
+<div class="text-3xl font-black text-gradient mt-auto">&gt;0.80</div>
+</div>
+<div class="metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase text-slate-400 font-label tracking-wider mb-2">Tumor Classes</span>
+<div class="text-3xl font-black text-gradient mt-auto">4</div>
+</div>
+<div class="metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase text-slate-400 font-label tracking-wider mb-2">Training Images</span>
+<div class="text-3xl font-black text-gradient mt-auto">~5,700</div>
+</div>
+</section>
+<!-- 4. PIPELINE FLOW -->
+<section>
+<div class="flex items-center gap-4 mb-8">
+<div class="h-px bg-[var(--bg-subtle)] flex-1"></div>
+<h2 class="text-xs font-mono text-slate-500 tracking-widest uppercase">Pipeline Architecture</h2>
+<div class="h-px bg-[var(--bg-subtle)] flex-1"></div>
+</div>
+<div class="relative">
+<!-- Horizontal connector line for desktop -->
+<div class="hidden lg:block absolute top-1/2 left-0 w-full h-px bg-[var(--bg-subtle)] -translate-y-1/2 z-0"></div>
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 relative z-10">
+<!-- Node 1 -->
+<div class="glass-card p-5 text-center flex flex-col items-center gap-3 relative">
+<span class="text-2xl">🖼️</span>
+<div>
+<h4 class="text-sm font-bold text-slate-200">MRI Input</h4>
+<p class="text-[0.65rem] text-slate-400 mt-1">Raw DICOM/NIfTI</p>
+</div>
+</div>
+<!-- Node 2 -->
+<div class="glass-card p-5 text-center flex flex-col items-center gap-3 relative">
+<span class="text-2xl">⚡</span>
+<div>
+<h4 class="text-sm font-bold text-[#00d4ff]">EfficientNet-B4</h4>
+<p class="text-[0.65rem] text-slate-400 mt-1">Feature Extraction</p>
+</div>
+</div>
+<!-- Node 3 -->
+<div class="glass-card p-5 text-center flex flex-col items-center gap-3 relative border-[#7c3aed]/30 bg-[#7c3aed]/5">
+<span class="text-2xl">🤔</span>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Decision</h4>
+<p class="text-[0.65rem] text-slate-400 mt-1">Classification Output</p>
+</div>
+</div>
+<!-- Node 4 -->
+<div class="glass-card p-5 text-center flex flex-col items-center gap-3 relative">
+<span class="text-2xl">🔬</span>
+<div>
+<h4 class="text-sm font-bold text-[#7c3aed]">U-Net + ResNet34</h4>
+<p class="text-[0.65rem] text-slate-400 mt-1">Segmentation Mask</p>
+</div>
+</div>
+<!-- Node 5 -->
+<div class="glass-card p-5 text-center flex flex-col items-center gap-3 relative">
+<span class="text-2xl">📋</span>
+<div>
+<h4 class="text-sm font-bold text-slate-200">Report</h4>
+<p class="text-[0.65rem] text-slate-400 mt-1">Combined Analysis</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. MODELS -->
+<section>
+<div class="flex items-center gap-4 mb-8">
+<div class="h-px bg-[var(--bg-subtle)] flex-1"></div>
+<h2 class="text-xs font-mono text-slate-500 tracking-widest uppercase">Models</h2>
+<div class="h-px bg-[var(--bg-subtle)] flex-1"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="glass-card p-6 border-[#00d4ff]/20 bg-[#00d4ff]/5 flex items-start gap-4">
+<div class="p-3 bg-[#00d4ff]/10 rounded-lg text-[#00d4ff]">
+<span class="material-symbols-outlined">memory</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-white mb-1">EfficientNet-B4</h3>
+<p class="text-sm text-[#00d4ff] font-mono mb-3">Classification Model</p>
+<p class="text-xs text-slate-400 leading-relaxed">Optimized architecture for accurate multi-class tumor classification with high efficiency and robust feature scaling.</p>
+</div>
+</div>
+<div class="glass-card p-6 border-[#7c3aed]/20 bg-[#7c3aed]/5 flex items-start gap-4">
+<div class="p-3 bg-[#7c3aed]/10 rounded-lg text-[#7c3aed]">
+<span class="material-symbols-outlined">layers</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-white mb-1">U-Net + ResNet34</h3>
+<p class="text-sm text-[#7c3aed] font-mono mb-3">Segmentation Model</p>
+<p class="text-xs text-slate-400 leading-relaxed">Deep residual learning combined with U-Net architecture for precise pixel-level tumor boundary delineation.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. STATUS -->
+<section>
+<div class="flex items-center gap-4 mb-8">
+<div class="h-px bg-[var(--bg-subtle)] flex-1"></div>
+<h2 class="text-xs font-mono text-slate-500 tracking-widest uppercase">Model Status</h2>
+<div class="h-px bg-[var(--bg-subtle)] flex-1"></div>
+</div>
+<div class="glass-card border-emerald-500/20 bg-emerald-500/5 p-6 md:p-8 flex items-center gap-6 relative overflow-hidden">
+<!-- Glow effect -->
+<div class="absolute -left-10 -top-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+<div class="text-4xl">🚀</div>
+<div class="flex-1">
+<h3 class="text-lg font-bold text-emerald-400 mb-1">Weights Loaded Successfully</h3>
+<p class="text-sm text-slate-300">Both models are ready — navigate to Inference to analyze an MRI scan.</p>
+</div>
+<a href="inference.html" class="hidden md:flex items-center gap-2 px-6 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded-full text-sm font-medium transition-all duration-300 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                            Start Inference <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+</section>
+</div>
+</main>
+</div>
+
+<script>
+    // Theme Toggling Logic
+    function initTheme() {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('themeIcon').textContent = 'light_mode';
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.getElementById('themeIcon').textContent = 'dark_mode';
+        }
+    }
+    
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+            document.getElementById('themeIcon').textContent = 'dark_mode';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+            document.getElementById('themeIcon').textContent = 'light_mode';
+        }
+    }
+    
+    initTheme();
+
+    // 3D Neural Brain Animation
+    function initBrain3D() {
+        const container = document.getElementById('brain3d-container');
+        if (!container || !window.THREE) return;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // Create a particle sphere that resembles a neural brain
+        const geometry = new THREE.SphereGeometry(3, 32, 32);
+        
+        // Distort vertices to make it look slightly brain-like (two hemispheres)
+        const positions = geometry.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+            let x = positions[i];
+            let y = positions[i+1];
+            let z = positions[i+2];
+            
+            // Dip in the middle (sagittal fissure)
+            if (Math.abs(x) < 0.5 && y > 0) {
+                positions[i+1] -= 0.5;
+            }
+            // Elongate slightly
+            positions[i+2] *= 1.2;
+            
+            // Add some randomness for neural network look
+            positions[i] += (Math.random() - 0.5) * 0.2;
+            positions[i+1] += (Math.random() - 0.5) * 0.2;
+            positions[i+2] += (Math.random() - 0.5) * 0.2;
+        }
+
+        const material = new THREE.PointsMaterial({
+            color: 0x00d4ff,
+            size: 0.05,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // Inner glowing core
+        const coreGeo = new THREE.SphereGeometry(2, 16, 16);
+        const coreMat = new THREE.MeshBasicMaterial({
+            color: 0x7c3aed,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.2
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        camera.position.z = 7;
+
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouseY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            targetX = mouseX * 0.5;
+            targetY = mouseY * 0.5;
+
+            particles.rotation.y += 0.002;
+            particles.rotation.x += (targetY - particles.rotation.x) * 0.05;
+            particles.rotation.y += (targetX - particles.rotation.y) * 0.05;
+            
+            core.rotation.y -= 0.001;
+            core.rotation.x += 0.001;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    }
+
+    // Initialize after a slight delay to ensure DOM is ready
+    setTimeout(initBrain3D, 100);
+</script>
+</body>
+</html>

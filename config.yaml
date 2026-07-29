@@ -1,0 +1,59 @@
+seed: 42
+
+paths:
+  data_classification: data/classification
+  data_segmentation: data/segmentation/kaggle_3m
+  model_classifier: models/classifier/brain_tumor_classifier.pth
+  model_segmenter: models/segmenter/brain_tumor_segmenter.pth
+  outputs: outputs
+
+classification:
+  model_name: efficientnet_b4
+  img_size: 380
+  num_classes: 4
+  batch_size: 8
+  epochs: 50
+  learning_rate: 0.0001
+  dropout: 0.2
+  fine_tune_unfreeze_layers: 15
+  val_split: 0.1
+  class_names:
+    - glioma
+    - meningioma
+    - notumor
+    - pituitary
+  augmentation:
+    random_flip: horizontal
+    random_rotation: 0.3
+    random_zoom: 0.2
+    random_contrast: 0.2
+    elastic_transform: 0.2
+    grid_distortion: 0.2
+    optical_distortion: 0.2
+    gaussian_noise: 0.1
+    cutout: 0.1
+  early_stopping_patience: 15
+  reduce_lr_patience: 5
+  fine_tune_lr: 0.00001
+  fine_tune_epochs: 50
+  use_class_weights: false
+  label_smoothing: 0.1
+  use_focal_loss: false
+  focal_loss_gamma: 2.0
+
+segmentation:
+  encoder: resnet34
+  encoder_weights: imagenet
+  img_size: 128
+  in_channels: 3
+  classes: 1
+  activation: sigmoid
+  batch_size: 16
+  epochs: 70  # Increased from 50
+  learning_rate: 0.00005  # Reduced from 0.0001
+  early_stopping_patience: 10  # Increased from 7
+  cosine_annealing_tmax: 15  # Increased from 10
+  bce_weight: 0.5
+  dice_weight: 0.5
+  mask_suffix: _mask
+  val_split: 0.2

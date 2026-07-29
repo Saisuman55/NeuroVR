@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Training Status - BrainTumor AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;family=Public+Sans:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {},
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Public Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Ambient Background Blobs based on Design System */
+        .ambient-blob-1 { background: radial-gradient(circle, rgba(0,212,255,0.10) 0%, transparent 70%); }
+        .ambient-blob-2 { background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%); }
+        .ambient-blob-3 { background: radial-gradient(circle, rgba(0,212,255,0.07) 0%, transparent 70%); }
+
+        /* Glassmorphism Base utility */
+        .glass-panel {
+            background-color: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .glass-panel:hover {
+            border-color: rgba(0,212,255,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0,212,255,0.15);
+        }
+
+        /* Metric Card Specific Override */
+        .metric-card {
+            border-color: rgba(0,212,255,0.18);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        /* Typography Utilities */
+        .text-brand-gradient {
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --glass-shadow: rgba(0, 0, 0, 0.05);
+            --border-subtle: rgba(0, 0, 0, 0.1);
+            --bg-subtle: rgba(0, 0, 0, 0.05);
+            --text-muted: #64748b;
+        }
+        .dark {
+            --glass-bg: rgba(255, 255, 255, 0.035);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.3);
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --bg-subtle: rgba(255, 255, 255, 0.05);
+            --text-muted: #94a3b8;
+        }
+        .glass-card {
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 4px 6px var(--glass-shadow) !important;
+        }
+        .pdf-export {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .pdf-export .glass-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+        .pdf-export * {
+            color: #0f172a;
+        }
+        .pdf-export .text-primary { color: #0284c7 !important; }
+        .pdf-export .text-error { color: #ef4444 !important; }
+        .pdf-export .text-on-surface-variant { color: #475569 !important; }
+        .pdf-export .material-symbols-outlined { color: #475569 !important; }
+
+</style>
+</head>
+<body class="bg-[#080d1a] text-white font-body min-h-screen overflow-x-hidden selection:bg-[#00d4ff]/30">
+<!-- Ambient Background Lighting -->
+<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+<div class="ambient-blob-1 absolute -top-[20%] -left-[10%] w-[800px] h-[800px] rounded-full blur-[80px]"></div>
+<div class="ambient-blob-2 absolute top-[10%] -right-[20%] w-[900px] h-[900px] rounded-full blur-[100px]"></div>
+<div class="ambient-blob-3 absolute bottom-[-30%] left-[20%] w-[1000px] h-[1000px] rounded-full blur-[120px]"></div>
+</div>
+<!-- SideNavBar Container -->
+<!-- SideNavBar Container -->
+<aside class="w-[240px] h-screen fixed left-0 top-0 border-r border-[var(--border-subtle)] bg-[#0a1020]/80 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.3)] z-50 flex flex-col">
+<!-- Header Logo -->
+<div class="p-6 border-b border-[var(--border-subtle)]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00d4ff] to-[#7c3aed] flex items-center justify-center shadow-[0_0_15px_rgba(0,212,255,0.3)]">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M12 2C8 2 5 5 5 9c0 2 .8 3.8 2 5l-1 4h12l-1-4c1.2-1.2 2-3 2-5 0-4-3-7-7-7z"/><path d="M9 9h6M9 12h4"/></svg>
+</div>
+<div>
+<h2 class="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-[#00d4ff] to-[#7c3aed] font-display tracking-tight">BrainTumor AI</h2>
+<p class="text-[0.65rem] text-slate-400 font-mono tracking-wider mt-0.5">Clinical Suite v2.4</p>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 space-y-1 p-4">
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] hover:translate-x-1 group" href="index.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-display text-sm font-medium tracking-wide">Home</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-white bg-[var(--bg-subtle)] border-l-2 border-[#00d4ff] transition-all duration-300 ease-in-out" href="training_status.html">
+<span class="material-symbols-outlined mr-3 text-[20px] text-[#00d4ff]" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-display text-sm font-bold tracking-wide">Training Status</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] hover:translate-x-1 group" href="inference.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">psychology</span>
+<span class="font-display text-sm font-medium tracking-wide">Inference</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] hover:translate-x-1 group" href="about.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">info</span>
+<span class="font-display text-sm font-medium tracking-wide">About</span>
+</a>
+</nav>
+<!-- Footer CTA -->
+<div class="p-4 border-t border-[var(--border-subtle)] mt-auto">
+<button class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00d4ff]/10 to-[#7c3aed]/10 border border-[#00d4ff]/30 text-[#00d4ff] font-bold text-sm hover:shadow-[0_0_20px_rgba(0,212,255,0.2)] hover:bg-[#00d4ff]/20 transition-all duration-300 flex items-center justify-center gap-2" onclick="window.location.href='inference.html'">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+            New Analysis
+        </button>
+</div>
+</aside>
+
+<!-- Main Content Canvas -->
+<main class="ml-[240px] pt-24 px-10 pb-12 relative z-10 min-h-screen flex flex-col gap-8 animate-fade-in-up">
+<!-- Section 1 & 2: Header and Action Bar -->
+<div class="flex justify-between items-end">
+<div>
+<div class="flex items-center space-x-3 mb-2">
+<div class="relative flex items-center justify-center w-3 h-3">
+<span class="absolute inline-flex w-full h-full rounded-full opacity-75 bg-emerald-400 animate-ping"></span>
+<span class="relative inline-flex w-2 h-2 rounded-full bg-emerald-500"></span>
+</div>
+<span class="text-xs font-label uppercase tracking-widest text-emerald-400 font-semibold">LIVE DASHBOARD</span>
+</div>
+<h1 class="font-headline text-4xl font-black text-brand-gradient mb-2 drop-shadow-md">Live Training Status</h1>
+<p class="text-slate-400 text-sm font-label max-w-xl">Real-time metrics from the active background training tasks.</p>
+</div>
+<div>
+<button class="flex items-center px-5 py-2.5 rounded-full bg-gradient-to-r from-[#00d4ff] to-[#0ea5e9] text-white font-medium text-sm shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:shadow-[0_0_25px_rgba(0,212,255,0.6)] hover:-translate-y-0.5 transition-all duration-300" onclick="updateMetrics(true); return false;">
+<span id="refresh_icon" class="material-symbols-outlined text-[18px] mr-2 transition-transform duration-1000 ease-in-out">refresh</span>
+                    Refresh Data
+                </button>
+</div>
+</div>
+<!-- Section 3: Classifier Section -->
+<div>
+<h3 id="epoch_title" class="text-lg font-headline font-semibold text-slate-200 mb-4 border-b border-[var(--border-subtle)] pb-2">Classifier Fine-Tuning (Phase 2)</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="glass-panel metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase font-label text-slate-400 tracking-wider font-semibold mb-3">LATEST TRAIN ACC</span>
+<div class="flex items-baseline justify-between">
+<span id="stat_train_acc" class="text-3xl font-headline font-black text-brand-gradient leading-none">97.23%</span>
+<span id="diff_train_acc" class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">▲ +1.05%</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-panel metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase font-label text-slate-400 tracking-wider font-semibold mb-3">LATEST VAL ACC</span>
+<div class="flex items-baseline justify-between">
+<span id="stat_val_acc" class="text-3xl font-headline font-black text-brand-gradient leading-none">96.21%</span>
+<span id="diff_val_acc" class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">▲ +1.09%</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="glass-panel metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase font-label text-slate-400 tracking-wider font-semibold mb-3">LATEST TRAIN LOSS</span>
+<div class="flex items-baseline justify-between">
+<span id="stat_train_loss" class="text-3xl font-headline font-black text-brand-gradient leading-none">0.0993</span>
+<span id="diff_train_loss" class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">▼ -0.0189</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="glass-panel metric-card p-6 flex flex-col justify-between">
+<span class="text-[0.75rem] uppercase font-label text-slate-400 tracking-wider font-semibold mb-3">LATEST VAL LOSS</span>
+<div class="flex items-baseline justify-between">
+<span id="stat_val_loss" class="text-3xl font-headline font-black text-brand-gradient leading-none">0.1421</span>
+<span id="diff_val_loss" class="text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">▼ -0.0222</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 4: Charts -->
+<div class="grid grid-cols-1 gap-6">
+<!-- Accuracy Learning Curve -->
+<div class="glass-panel p-6 flex flex-col min-h-[380px]">
+<div class="flex justify-between items-center mb-6">
+<h4 class="font-headline font-semibold text-slate-200">Accuracy Learning Curve</h4>
+<div class="flex items-center space-x-4 text-xs font-label">
+<div class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#00d4ff] mr-2"></span><span class="text-slate-400">Train Acc</span></div>
+<div class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#7c3aed] mr-2"></span><span class="text-slate-400">Val Acc</span></div>
+</div>
+</div>
+<!-- Chart.js Canvas -->
+<div class="flex-1 relative w-full h-full min-h-[250px]">
+<canvas id="accChart" class="w-full h-full"></canvas>
+</div>
+<!-- X Axis Labels handled by Chart.js -->
+</div>
+<!-- Loss Curve -->
+<div class="glass-panel p-6 flex flex-col min-h-[380px]">
+<div class="flex justify-between items-center mb-6">
+<h4 class="font-headline font-semibold text-slate-200">Loss Curve</h4>
+<div class="flex items-center space-x-4 text-xs font-label">
+<div class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#fbbf24] mr-2"></span><span class="text-slate-400">Train Loss</span></div>
+<div class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#f87171] mr-2"></span><span class="text-slate-400">Val Loss</span></div>
+</div>
+</div>
+<!-- Chart.js Canvas -->
+<div class="flex-1 relative w-full h-full min-h-[250px]">
+<canvas id="lossChart" class="w-full h-full"></canvas>
+</div>
+<!-- X Axis Labels handled by Chart.js -->
+</div>
+</div>
+</main>
+<script>
+    // Initialize Chart.js defaults for dark mode
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.05)';
+    Chart.defaults.scale.grid.tickColor = 'transparent';
+
+    let accChartInstance = null;
+    let lossChartInstance = null;
+
+    function initCharts() {
+        const accCtx = document.getElementById('accChart').getContext('2d');
+        const lossCtx = document.getElementById('lossChart').getContext('2d');
+
+        accChartInstance = new Chart(accCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15,23,42,0.9)', titleColor: '#00d4ff', bodyColor: '#fff', padding: 10, cornerRadius: 8, borderColor: 'rgba(0,212,255,0.2)', borderWidth: 1 } },
+                scales: {
+                    x: { title: { display: true, text: 'Epochs' } },
+                    y: { title: { display: true, text: 'Accuracy (%)' }, min: 0, max: 100 }
+                },
+                elements: { line: { tension: 0.4 }, point: { radius: 3, hoverRadius: 6 } }
+            }
+        });
+
+        lossChartInstance = new Chart(lossCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(15,23,42,0.9)', titleColor: '#fbbf24', bodyColor: '#fff', padding: 10, cornerRadius: 8, borderColor: 'rgba(251,191,36,0.2)', borderWidth: 1 } },
+                scales: {
+                    x: { title: { display: true, text: 'Epochs' } },
+                    y: { title: { display: true, text: 'Loss' }, min: 0 }
+                },
+                elements: { line: { tension: 0.4 }, point: { radius: 3, hoverRadius: 6 } }
+            }
+        });
+    }
+
+    function updateCharts(history) {
+        const labels = Array.from({length: history.epoch}, (_, i) => `Ep ${i + 1}`);
+        
+        accChartInstance.data = {
+            labels: labels,
+            datasets: [
+                { label: 'Train Acc', data: history.train_acc, borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.1)', fill: true, borderWidth: 3 },
+                { label: 'Val Acc', data: history.val_acc, borderColor: '#7c3aed', backgroundColor: 'transparent', fill: false, borderWidth: 3 }
+            ]
+        };
+        accChartInstance.update();
+
+        lossChartInstance.data = {
+            labels: labels,
+            datasets: [
+                { label: 'Train Loss', data: history.train_loss, borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.1)', fill: true, borderWidth: 3 },
+                { label: 'Val Loss', data: history.val_loss, borderColor: '#f87171', backgroundColor: 'transparent', fill: false, borderWidth: 3, borderDash: [6, 4] }
+            ]
+        };
+        lossChartInstance.update();
+    }
+
+    function updateMetrics(isManual = false) {
+        if (isManual) {
+            const icon = document.getElementById('refresh_icon');
+            if (icon) {
+                icon.style.transform = `rotate(${(icon.dataset.rot || 0) - -360}deg)`;
+                icon.dataset.rot = (icon.dataset.rot || 0) - -360;
+            }
+        }
+        
+        fetch('metrics.json?t=' + new Date().getTime())
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.history) {
+                    const h = data.history;
+                    if(h.epoch > 0) {
+                        document.getElementById('epoch_title').textContent = data.status === "paused" ? `Classifier Fine-Tuning (Paused at Epoch ${h.epoch}/50)` : `Classifier Fine-Tuning (Epoch ${h.epoch}/50)`;
+                        
+                        updateCharts(h);
+
+                        // LATEST
+                        const len = h.train_acc.length;
+                        if(len > 0) {
+                            document.getElementById('stat_train_acc').textContent = h.train_acc[len-1].toFixed(2) + '%';
+                            document.getElementById('stat_val_acc').textContent = h.val_acc[len-1].toFixed(2) + '%';
+                            document.getElementById('stat_train_loss').textContent = h.train_loss[len-1].toFixed(4);
+                            document.getElementById('stat_val_loss').textContent = h.val_loss[len-1].toFixed(4);
+                            
+                            // Diff vs previous epoch
+                            if(len > 1) {
+                                const diff_t_acc = h.train_acc[len-1] - h.train_acc[len-2];
+                                document.getElementById('diff_train_acc').innerHTML = `${diff_t_acc >= 0 ? '▲ +' : '▼ '}${diff_t_acc.toFixed(2)}%`;
+                                document.getElementById('diff_train_acc').className = diff_t_acc >= 0 ? "text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded" : "text-xs font-medium text-red-400 bg-red-400/10 px-2 py-1 rounded";
+                                
+                                const diff_v_acc = h.val_acc[len-1] - h.val_acc[len-2];
+                                document.getElementById('diff_val_acc').innerHTML = `${diff_v_acc >= 0 ? '▲ +' : '▼ '}${diff_v_acc.toFixed(2)}%`;
+                                document.getElementById('diff_val_acc').className = diff_v_acc >= 0 ? "text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded" : "text-xs font-medium text-red-400 bg-red-400/10 px-2 py-1 rounded";
+                                
+                                const diff_t_loss = h.train_loss[len-1] - h.train_loss[len-2];
+                                document.getElementById('diff_train_loss').innerHTML = `${diff_t_loss <= 0 ? '▼ ' : '▲ +'}${Math.abs(diff_t_loss).toFixed(4)}`;
+                                document.getElementById('diff_train_loss').className = diff_t_loss <= 0 ? "text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded" : "text-xs font-medium text-red-400 bg-red-400/10 px-2 py-1 rounded";
+                                
+                                const diff_v_loss = h.val_loss[len-1] - h.val_loss[len-2];
+                                document.getElementById('diff_val_loss').innerHTML = `${diff_v_loss <= 0 ? '▼ ' : '▲ +'}${Math.abs(diff_v_loss).toFixed(4)}`;
+                                document.getElementById('diff_val_loss').className = diff_v_loss <= 0 ? "text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded" : "text-xs font-medium text-red-400 bg-red-400/10 px-2 py-1 rounded";
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error("Waiting for metrics.json...", err));
+    }
+
+    // Run immediately
+    initCharts();
+    updateMetrics();
+
+</script>
+
+</body></html>

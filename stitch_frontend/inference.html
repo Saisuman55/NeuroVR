@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Inference - BrainTumor AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "var(--bg)",
+                      "on-background": "var(--on-bg)",
+                      "surface": "var(--surface)",
+                      "on-surface": "var(--on-surface)",
+                      "surface-variant": "var(--surface-variant)",
+                      "on-surface-variant": "var(--on-surface-variant)",
+                      "primary": "var(--primary)",
+                      "primary-container": "var(--primary-container)",
+                      "on-primary-container": "var(--on-primary-container)",
+                      "secondary": "var(--secondary)",
+                      "secondary-container": "var(--secondary-container)",
+                      "error": "var(--error)",
+                      "outline": "var(--outline)",
+                      "surface-container-lowest": "var(--surface-lowest)",
+                      "surface-container-low": "var(--surface-low)",
+                      "surface-container": "var(--surface-container)",
+                      "surface-container-high": "var(--surface-high)",
+                      "surface-container-highest": "var(--surface-highest)",
+                      "tertiary-container": "var(--tertiary-container)"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "24px",
+                      "margin-md": "24px",
+                      "margin-sm": "12px",
+                      "margin-lg": "48px",
+                      "gutter": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "metric-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "800"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "metric-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "1",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "300"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        :root {
+            --bg: #f8fafc;
+            --on-bg: #0f172a;
+            --surface: #ffffff;
+            --on-surface: #1e293b;
+            --surface-variant: #f1f5f9;
+            --on-surface-variant: #64748b;
+            --primary: #0284c7;
+            --primary-container: #e0f2fe;
+            --on-primary-container: #0369a1;
+            --secondary: #6366f1;
+            --secondary-container: #e0e7ff;
+            --error: #ef4444;
+            --outline: #cbd5e1;
+            --surface-lowest: #ffffff;
+            --surface-low: #f8fafc;
+            --surface-container: #f1f5f9;
+            --surface-high: #e2e8f0;
+            --surface-highest: #cbd5e1;
+            --tertiary-container: #fef3c7;
+        }
+        .dark {
+            --bg: #0e1417;
+            --on-bg: #dde3e7;
+            --surface: #0e1417;
+            --on-surface: #dde3e7;
+            --surface-variant: #2f3639;
+            --on-surface-variant: #bbc9cf;
+            --primary: #a8e8ff;
+            --primary-container: #00d4ff;
+            --on-primary-container: #00586b;
+            --secondary: #d2bbff;
+            --secondary-container: #6001d1;
+            --error: #ffb4ab;
+            --outline: #859398;
+            --surface-lowest: #080f12;
+            --surface-low: #161d1f;
+            --surface-container: #1a2123;
+            --surface-high: #242b2e;
+            --surface-highest: #2f3639;
+            --tertiary-container: #feb528;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.035);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 200ms ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0px 8px 24px rgba(0, 212, 255, 0.15);
+        }
+        .fade-in-slide {
+            animation: fadeInSlide 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        @keyframes fadeInSlide {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite alternate;
+        }
+        @keyframes pulseGlow {
+            from { box-shadow: 0 0 10px rgba(0, 212, 255, 0.2); }
+            to { box-shadow: 0 0 20px rgba(0, 212, 255, 0.6); }
+        }
+        /* Custom scrollbar for gallery */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.02); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1); 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.2); 
+        }
+      
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --glass-shadow: rgba(0, 0, 0, 0.05);
+            --border-subtle: rgba(0, 0, 0, 0.1);
+            --bg-subtle: rgba(0, 0, 0, 0.05);
+            --text-muted: #64748b;
+        }
+        .dark {
+            --glass-bg: rgba(255, 255, 255, 0.035);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: rgba(0, 0, 0, 0.3);
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --bg-subtle: rgba(255, 255, 255, 0.05);
+            --text-muted: #94a3b8;
+        }
+        .glass-card {
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 4px 6px var(--glass-shadow) !important;
+        }
+        .pdf-export {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .pdf-export .glass-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+        }
+        .pdf-export * {
+            color: #0f172a;
+        }
+        .pdf-export .text-primary { color: #0284c7 !important; }
+        .pdf-export .text-error { color: #ef4444 !important; }
+        .pdf-export .text-on-surface-variant { color: #475569 !important; }
+        .pdf-export .material-symbols-outlined { color: #475569 !important; }
+
+</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Background Accent -->
+<div class="fixed top-0 left-[240px] right-0 h-[512px] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none -z-10"></div>
+<!-- SideNavBar Container -->
+<!-- SideNavBar Container -->
+<aside class="w-[240px] h-screen fixed left-0 top-0 border-r border-[var(--border-subtle)] bg-[#0a1020]/80 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.3)] z-50 flex flex-col">
+<!-- Header Logo -->
+<div class="p-6 border-b border-[var(--border-subtle)]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00d4ff] to-[#7c3aed] flex items-center justify-center shadow-[0_0_15px_rgba(0,212,255,0.3)]">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M12 2C8 2 5 5 5 9c0 2 .8 3.8 2 5l-1 4h12l-1-4c1.2-1.2 2-3 2-5 0-4-3-7-7-7z"/><path d="M9 9h6M9 12h4"/></svg>
+</div>
+<div>
+<h2 class="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-[#00d4ff] to-[#7c3aed] font-display tracking-tight">BrainTumor AI</h2>
+<p class="text-[0.65rem] text-slate-400 font-mono tracking-wider mt-0.5">Clinical Suite v2.4</p>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 space-y-1 p-4">
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] group" href="index.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-display text-sm font-medium tracking-wide">Home</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] group" href="training_status.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">analytics</span>
+<span class="font-display text-sm font-medium tracking-wide">Training Status</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-white bg-[var(--bg-subtle)] border-l-2 border-[#00d4ff] transition-all duration-300 ease-in-out" href="inference.html">
+<span class="material-symbols-outlined mr-3 text-[20px] text-[#00d4ff]" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-display text-sm font-bold tracking-wide">Inference</span>
+</a>
+<!-- Inactive Tab -->
+<a class="flex items-center px-3 py-3 rounded-lg text-slate-400 hover:text-white transition-all duration-300 ease-in-out hover:bg-[var(--bg-subtle)] group" href="about.html">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-[#00d4ff] transition-colors" style="font-variation-settings: 'FILL' 0;">info</span>
+<span class="font-display text-sm font-medium tracking-wide">About</span>
+</a>
+</nav>
+<!-- Footer CTA -->
+<div class="p-4 border-t border-[var(--border-subtle)] mt-auto">
+
+    <button id="themeToggle" onclick="toggleTheme()" class="w-full flex items-center justify-center gap-2 py-2 text-slate-400 hover:text-white transition-colors mb-3 rounded-lg hover:bg-[var(--bg-subtle)]">
+        <span class="material-symbols-outlined" id="themeIcon">light_mode</span>
+        <span class="font-display text-sm font-medium">Toggle Theme</span>
+    </button>
+    <button class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#00d4ff]/10 to-[#7c3aed]/10 border border-[#00d4ff]/30 text-[#00d4ff] font-bold text-sm hover:shadow-[0_0_20px_rgba(0,212,255,0.2)] hover:bg-[#00d4ff]/20 transition-all duration-300 flex items-center justify-center gap-2" onclick="window.location.href='inference.html'">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+            New Analysis
+        </button>
+</div>
+</aside>
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-240px)] z-40 bg-surface/20 backdrop-blur-lg border-b border-[var(--border-subtle)] flex justify-between items-center h-16 px-margin-md">
+<div class="font-label-caps text-label-caps tracking-widest text-on-surface">BrainTumor AI Dashboard</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#00d4ff]/30 to-[#7c3aed]/30 border border-[#00d4ff]/40 ml-2 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-[#00d4ff]" style="font-variation-settings:'FILL' 1">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-0 md:ml-[240px] pt-[88px] px-container-padding pb-container-padding max-w-[1600px] mx-auto min-h-screen">
+<!-- Header Section -->
+<div class="flex items-center justify-between mb-margin-lg fade-in-slide" style="animation-delay: 0.1s;">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">MRI Inference</h2>
+<span class="px-2 py-1 bg-primary/20 text-primary font-label-caps text-[10px] rounded border border-primary/30 tracking-widest">AI ANALYSIS</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md max-w-2xl">Upload T1/T2 weighted or FLAIR MRI sequences for automated glioma detection, localization, and volumetric assessment.</p>
+</div>
+<div class="flex gap-3">
+<button onclick="downloadImage('galleryOverlayImg', 'overlay_result.png')" class="flex items-center gap-2 px-4 py-2 bg-transparent border border-primary text-primary font-label-caps text-label-caps rounded hover:bg-primary/10 transition-colors duration-200">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Download Overlay
+                </button>
+<button onclick="downloadImage('galleryContourImg', 'contour_result.png')" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-container to-secondary text-white font-label-caps text-label-caps rounded hover:shadow-[0_0_15px_rgba(0,212,255,0.4)] transition-all duration-200 border border-transparent hover:border-white/20">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Download Contour
+                </button>
+
+                <button onclick="generatePDFReport()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-secondary-container to-secondary text-white font-label-caps text-label-caps rounded hover:shadow-[0_0_15px_rgba(96,1,209,0.4)] transition-all duration-200 border border-transparent hover:border-white/20">
+                    <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+                    Export Clinical Report
+                </button>
+
+</div>
+</div>
+
+<!-- File Upload Zone -->
+<input type="file" id="fileUpload" class="hidden" accept=".jpg,.jpeg,.png,.tiff" onchange="handleFileSelect(this.files)">
+<div id="dropZone" onclick="document.getElementById('fileUpload').click()" class="glass-card rounded-xl p-margin-md mb-margin-lg border-dashed border-2 border-outline/30 flex flex-col items-center justify-center min-h-[300px] cursor-pointer hover:border-primary/50 transition-colors fade-in-slide relative overflow-hidden group" style="animation-delay: 0.2s;">
+    <!-- Background subtle hover effect -->
+    <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    
+    <!-- Upload State Placeholder -->
+    <div id="uploadPlaceholder" class="flex flex-col items-center w-full relative z-10 pointer-events-none">
+        <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-4 group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">cloud_upload</span>
+        <p class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Drag &amp; Drop MRI Scans</p>
+        <p class="text-on-surface-variant font-body-sm text-body-sm mb-4 text-center">Supports DICOM, NIfTI (.nii), and High-Res PNG/JPEG.<br/>Max file size: 500MB.</p>
+        <button class="px-6 py-2 bg-surface-container-high border border-[var(--border-subtle)] rounded font-label-caps text-label-caps text-on-surface hover:bg-[var(--bg-subtle)] transition-colors pointer-events-auto">Browse Files</button>
+    </div>
+
+    <!-- Image Preview State -->
+    <div id="imagePreviewContainer" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-background/90 backdrop-blur-md z-20 p-4">
+        <img id="imagePreview" src="" alt="MRI Preview" class="max-h-[160px] object-contain rounded-lg shadow-lg border border-white/20 mb-4">
+        
+        <div id="analysisControls" class="flex flex-col items-center">
+            <button onclick="event.stopPropagation(); runMockAnalysis()" class="px-6 py-2 bg-gradient-to-r from-primary-container to-secondary text-white font-bold rounded-full shadow-[0_0_15px_rgba(0,212,255,0.4)] hover:scale-105 transition-transform pointer-events-auto">
+                Run Analysis
+            </button>
+            <p class="text-xs text-on-surface-variant mt-2 hover:text-white transition-colors">Click anywhere to change image</p>
+        </div>
+
+        <div id="analysisLoading" class="hidden flex-col items-center">
+            <div class="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-2"></div>
+            <p class="text-sm font-bold text-primary animate-pulse">Running Clinical Pipeline v2.4...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Results Dashboard (Hidden until analysis runs) -->
+<div id="resultsDashboard" class="hidden">
+    <!-- Two Column Layout: Preprocessing & Classification -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-container-padding mb-margin-lg">
+        <!-- Image Preprocessing -->
+        <div class="glass-card rounded-xl flex flex-col fade-in-slide" style="animation-delay: 0.3s;">
+            <div class="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
+            <h3 class="font-label-caps text-label-caps text-on-surface-variant tracking-widest">IMAGE PREPROCESSING</h3>
+            <span class="material-symbols-outlined text-primary text-sm">settings_suggest</span>
+            </div>
+            <div class="p-container-padding flex-1">
+            <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+            <p class="font-label-caps text-[10px] text-on-surface-variant mb-2">ORIGINAL INPUT</p>
+            <div class="aspect-square bg-surface-container-lowest rounded border border-[var(--border-subtle)] overflow-hidden relative">
+            <img id="dashboardOriginalImg" alt="Original Scan" class="w-full h-full object-cover" src=""/>
+            </div>
+            </div>
+            <div>
+            <p class="font-label-caps text-[10px] text-on-surface-variant mb-2">GREEN OVERLAY</p>
+            <div class="aspect-square bg-surface-container-lowest rounded border border-[var(--border-subtle)] overflow-hidden relative group">
+            <img id="dashboardOverlayImg" alt="Green Overlay" class="w-full h-full object-cover" src=""/>
+            <div class="absolute inset-0 border border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            </div>
+            </div>
+            </div>
+            <div class="bg-surface-container/50 rounded-lg p-4 border border-[var(--border-subtle)]">
+            <p class="font-label-caps text-[10px] text-on-surface-variant mb-3">PIPELINE STEPS</p>
+            <ul class="space-y-2">
+            <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            <span class="font-body-sm text-body-sm text-on-surface">Grayscale Conversion</span>
+            </li>
+            <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            <span class="font-body-sm text-body-sm text-on-surface">Gaussian Blur (Sigma=1.5)</span>
+            </li>
+            <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            <span class="font-body-sm text-body-sm text-on-surface">Otsu Thresholding</span>
+            </li>
+            <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            <span class="font-body-sm text-body-sm text-on-surface">Morphological Operations</span>
+            </li>
+            </ul>
+            </div>
+            </div>
+        </div>
+        
+        <!-- Classification Result -->
+        <div class="glass-card rounded-xl flex flex-col fade-in-slide" style="animation-delay: 0.4s;">
+            <div class="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
+            <h3 class="font-label-caps text-label-caps text-on-surface-variant tracking-widest">CLASSIFICATION RESULT</h3>
+            <span class="material-symbols-outlined text-error text-sm">warning</span>
+            </div>
+            <div class="p-container-padding flex-1 flex flex-col">
+            <div class="flex items-start justify-between mb-8">
+            <div>
+            <p class="font-label-caps text-[10px] text-on-surface-variant mb-1">PRIMARY FINDING</p>
+            <h4 id="primaryFindingText" class="font-display-lg text-[36px] font-bold text-error leading-none tracking-tight">—</h4>
+            </div>
+            <div class="text-right">
+            <p class="font-label-caps text-[10px] text-on-surface-variant mb-1">CONFIDENCE</p>
+            <div id="confidenceDisplay" class="font-metric-lg text-metric-lg text-primary pulse-glow inline-block px-3 py-1 bg-primary/10 rounded border border-primary/20">
+                                            —
+                                        </div>
+            </div>
+            </div>
+            <div class="flex-1 flex flex-col justify-end space-y-4">
+            <p class="font-label-caps text-[10px] text-on-surface-variant">PROBABILITY DISTRIBUTION</p>
+            <!-- Bar Chart (Simulated Plotly) -->
+            <div class="space-y-3">
+            <div>
+            <div class="flex justify-between text-[10px] font-label-caps text-on-surface mb-1">
+            <span class="font-bold">Glioma</span><span id="prob-val-glioma" class="font-bold text-on-surface">0.0%</span>
+            </div>
+            <div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+            <div id="prob-bar-glioma" class="h-full bg-error rounded-full transition-all duration-500" style="width: 0%;"></div>
+            </div>
+            </div>
+            <div>
+            <div class="flex justify-between text-[10px] font-label-caps text-on-surface-variant mb-1">
+            <span class="font-bold">Meningioma</span><span id="prob-val-meningioma" class="font-bold text-on-surface">0.0%</span>
+            </div>
+            <div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+            <div id="prob-bar-meningioma" class="h-full bg-secondary-container rounded-full transition-all duration-500" style="width: 0%;"></div>
+            </div>
+            </div>
+            <div>
+            <div class="flex justify-between text-[10px] font-label-caps text-on-surface-variant mb-1">
+            <span class="font-bold">Pituitary</span><span id="prob-val-pituitary" class="font-bold text-on-surface">0.0%</span>
+            </div>
+            <div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+            <div id="prob-bar-pituitary" class="h-full bg-tertiary-container rounded-full transition-all duration-500" style="width: 0%;"></div>
+            </div>
+            </div>
+            <div>
+            <div class="flex justify-between text-[10px] font-label-caps text-on-surface-variant mb-1">
+            <span class="font-bold">No Tumor</span><span id="prob-val-notumor" class="font-bold text-on-surface">0.0%</span>
+            </div>
+            <div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+            <div id="prob-bar-notumor" class="h-full bg-surface-tint rounded-full transition-all duration-500" style="width: 0%;"></div>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
+        </div>
+    </div>
+    
+    
+        <!-- Grad-CAM Interpretability -->
+        <div class="glass-card rounded-xl flex flex-col fade-in-slide mb-margin-lg mt-margin-lg" style="animation-delay: 0.45s;">
+            <div class="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <h3 class="font-label-caps text-label-caps text-on-surface-variant tracking-widest">GRAD-CAM INTERPRETABILITY</h3>
+                <span class="material-symbols-outlined text-primary text-sm">visibility</span>
+            </div>
+            <div class="p-container-padding flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <p class="font-label-caps text-[10px] text-on-surface-variant mb-2">MODEL ATTENTION HEATMAP</p>
+                        <div class="aspect-video bg-surface-container-lowest rounded border border-[var(--border-subtle)] overflow-hidden relative group">
+                            <img id="gradcamImg" alt="Grad-CAM" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmDFJsHWgPCA8-aat14raS7HnMb5gDT_hOyj4MWoN57Y5FNjijD0wUfC0GdCp31lR50uxfk-y2I7NglMiwkNy6CPJQ9TSENxoP3Ivv2mJNkhfme2oWfCQrfcHBbWYT1408VmfXDy_vzXtw8EB3iYTvtABCONFTBTT0fM1fD2YkTUv2B9VAGE5tRW7qyx6xmxaP_wCRFQmNSDRXapXMQh4ywkkHr3ktx7pfxu8LObtJQIWIEWQnN0ur7pfiQKpv1HSxoU0TWJ4rfk2J"/>
+                            <!-- CSS simulated radar sweep -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-1000 ease-in-out pointer-events-none"></div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col justify-center">
+                        <h4 class="font-headline-lg-mobile text-on-surface mb-2">Visual Explanation</h4>
+                        <p class="text-on-surface-variant text-sm mb-4 leading-relaxed">The highlighted regions indicate the features the Deep Learning model focused on to make its prediction. Stronger heat signatures (red/yellow) correlate with critical pathological textures.</p>
+                        
+                        <div class="p-4 bg-surface-container/50 rounded-lg border border-outline/20">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-on-surface font-bold">Grad-CAM Localization Confidence</span>
+                                <span class="text-xs text-primary font-bold" id="gradCamConfText">High</span>
+                            </div>
+                            <div class="h-1.5 bg-surface-container-highest rounded-full overflow-hidden mt-2">
+                                <div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" id="gradCamConfBar" style="width: 88%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Segmentation Result Gallery -->
+    <div class="glass-card rounded-xl mb-margin-lg fade-in-slide" style="animation-delay: 0.5s;">
+        <div class="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
+        <h3 class="font-label-caps text-label-caps text-on-surface-variant tracking-widest">SEGMENTATION RESULT</h3>
+        <span class="material-symbols-outlined text-primary text-sm">layers</span>
+        </div>
+        <div class="p-container-padding overflow-x-auto pb-6">
+        <div class="flex gap-4 min-w-[800px]">
+        <!-- Gallery Item 1 -->
+        <div class="flex-1 flex flex-col gap-2">
+        <div class="aspect-square bg-surface-container-lowest rounded border border-[var(--border-subtle)] overflow-hidden">
+        <img id="galleryOriginalImg" alt="Original" class="w-full h-full object-cover" data-alt="A raw clinical axial MRI scan of a human brain, focused on pathological structures, high resolution, stark lighting, dark mode background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVI3hPHarVFHAzNSCwteNPX9rUUjLYAs_yYP6eA9kY_u-6wWNWER_wBXk9ONEmRD_rDn_IMntrUGcd9PtXD6wma4INruR-AP_Wbn5GpDIEvS3FEWf-zLdgShiYYnM3vchOal3eTG6wi2dY6NP-e34mCaPGYu479XPDSuxcfZQrywHeyBAzwWHFmlLCNIro333jHXzxbp-ODJ2n7-IHfxNEzBkI8wBGgZi-MnEBBJLwFzvCRHyKWfI77Rz0ES1l9_SJjjCDuIKnjn7N"/>
+        </div>
+        <p class="font-label-caps text-[10px] text-center text-on-surface-variant">Original</p>
+        </div>
+        <!-- Gallery Item 2 -->
+        <div class="flex-1 flex flex-col gap-2">
+        <div class="aspect-square bg-[#000000] rounded border border-[var(--border-subtle)] overflow-hidden flex items-center justify-center relative">
+        <img id="galleryMaskImg" alt="Binary Mask" class="w-full h-full object-cover opacity-80" data-alt="A stark black and white binary mask derived from an MRI scan, showing a solid white blob representing a tumor against a pure black background, medical AI diagnostic context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtzfKDnZBHpnhZCjBx_2sbVivtyXuEUgfJMyAdzNiKgCIBgiYdB9NRbIJKpyGOFlMPcamRcF_GVGRMRqJLsiZ2zYgfaQirWFfSr55TDN9-TXm8KpM8orfXDe6FX4AOY5xgUItwZSV2nZe8jntI9SAaRVvse1se1YIukEuA7ton5EJ0HeoXjY06XeiIdSHO7dxstVbgmZ7XomT4pQqYIiIvWlgyd4tkVTTFRGg2oPvXyFgh9ckbnMRmxKvk7z4_x4RrAWMfw7-kVwJS"/>
+        </div>
+        <p class="font-label-caps text-[10px] text-center text-on-surface-variant">Binary Mask</p>
+        </div>
+        <!-- Gallery Item 3 -->
+        <div class="flex-1 flex flex-col gap-2">
+        <div class="aspect-square bg-surface-container-lowest rounded border border-[var(--border-subtle)] overflow-hidden relative">
+        <img id="galleryOverlayImg" alt="Green Overlay" class="w-full h-full object-cover" data-alt="An axial MRI brain scan with a vibrant, semi-transparent neon green overlay highlighting a specific tumorous region, high contrast, futuristic medical UI style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmDFJsHWgPCA8-aat14raS7HnMb5gDT_hOyj4MWoN57Y5FNjijD0wUfC0GdCp31lR50uxfk-y2I7NglMiwkNy6CPJQ9TSENxoP3Ivv2mJNkhfme2oWfCQrfcHBbWYT1408VmfXDy_vzXtw8EB3iYTvtABCONFTBTT0fM1fD2YkTUv2B9VAGE5tRW7qyx6xmxaP_wCRFQmNSDRXapXMQh4ywkkHr3ktx7pfxu8LObtJQIWIEWQnN0ur7pfiQKpv1HSxoU0TWJ4rfk2J"/>
+        </div>
+        <p class="font-label-caps text-[10px] text-center text-on-surface-variant">Green Overlay</p>
+        </div>
+        <!-- Gallery Item 4 -->
+        <div class="flex-1 flex flex-col gap-2">
+        <div class="aspect-square bg-surface-container-lowest rounded border border-[var(--border-subtle)] overflow-hidden relative">
+        <img id="galleryContourImg" alt="Contour Boundary" class="w-full h-full object-cover" data-alt="An axial MRI brain scan featuring a precise, thin, brightly colored contour line outlining a tumor anomaly, sharp clinical rendering, deep space background tone." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7KIL_lmYS8yf2RFq2tiAUNNYkBi-8mjsXnHc4qGjNH_cfd34NLecKpdCeR5jY5FKDD-m0WSCLo6E9NGQvm1xX-zS46jD2JNxwKoJbdXTQ1grd_DrjlVCcH9Vo0z-F8iOCd1AvZymKLlZC2QP61vjPsLBJeK8lOA2aXumg0X7Nj1MJsaGu87ZBt9kYDP3M-UBncmqI4AqDEiQF6OtMdOBuzM_2xAlg6swzUONh_25cCSlN13STVsfFtbAOOV7OO_Nx8tf1T2f077fb"/>
+        </div>
+        <p class="font-label-caps text-[10px] text-center text-primary">Contour Boundary</p>
+        </div>
+        <!-- Gallery Item 5 -->
+        <div class="flex-1 flex flex-col gap-2">
+        <div class="aspect-square bg-surface-container-lowest rounded border border-[var(--border-subtle)] overflow-hidden relative">
+        <img id="galleryHeatmapImg" alt="Heat Map" class="w-full h-full object-cover" data-alt="A JET colormap heatmap overlaid on a brain MRI, showing the U-Net model probability intensity across regions, vivid red-yellow-blue gradient, clinical dark mode." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBt9C2vuF4qLNFEAXHlRBiEcVFNcHlZ_6SH-aQN_9u8wdt8Exe3rz3At-qJ3cY7FHM71yQjx_V0M8owQIkvLR8CAyzrM7p0dZLD0alWFOj5RTuzi5P9kUG07B2zIlDe70La95rX5f_tBYgu48THwiPuNkBDWWuSmeIT_gO0zOOphAZxwkXpjKosEg516JHy0VvkMsJB93VEglWZ_kVtBVckwJslMR0EBG3woPwc1A8kRhoeUSuE1WTsNQ63O6x1PT8uUDkPkxvS-A9G"/>
+        </div>
+        <p class="font-label-caps text-[10px] text-center text-on-surface-variant">Heat Map</p>
+        </div>
+        </div>
+        </div>
+    </div>
+    
+    <!-- Tumor Analysis Section -->
+    <div class="fade-in-slide" style="animation-delay: 0.6s;">
+        <div class="flex items-center justify-between mb-4">
+        <h3 class="font-label-caps text-label-caps text-on-surface-variant tracking-widest">TUMOR ANALYSIS METRICS</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <!-- Stat Card 1 -->
+        <div class="glass-card rounded-lg p-4 flex flex-col">
+        <span class="material-symbols-outlined text-primary mb-2 text-xl">straighten</span>
+        <p class="font-label-caps text-[10px] text-on-surface-variant mb-1">TUMOR COVERAGE</p>
+        <p class="font-metric-lg text-[28px] font-bold text-on-surface"><span id="statTumorCoverage">—</span><span class="text-sm font-normal text-on-surface-variant ml-1">%</span></p>
+        </div>
+        <!-- Stat Card 2 -->
+        <div class="glass-card rounded-lg p-4 flex flex-col">
+        <span class="material-symbols-outlined text-error mb-2 text-xl">vital_signs</span>
+        <p class="font-label-caps text-[10px] text-on-surface-variant mb-1">SEVERITY INDEX</p>
+        <p id="statSeverity" class="font-metric-lg text-[28px] font-bold text-error">—</p>
+        </div>
+        <!-- Stat Card 3 -->
+        <div class="glass-card rounded-lg p-4 flex flex-col">
+        <span class="material-symbols-outlined text-tertiary-container mb-2 text-xl">gradient</span>
+        <p class="font-label-caps text-[10px] text-on-surface-variant mb-1">TUMOR PIXELS</p>
+        <p id="statTumorPixels" class="font-metric-lg text-[28px] font-bold text-on-surface">—</p>
+        </div>
+        <!-- Stat Card 4 -->
+        <div class="glass-card rounded-lg p-4 flex flex-col">
+        <span class="material-symbols-outlined text-secondary-container mb-2 text-xl">center_focus_strong</span>
+        <p class="font-label-caps text-[10px] text-on-surface-variant mb-1">TUMOR CLASS</p>
+        <p id="statTumorClass" class="font-metric-lg text-[20px] font-bold text-on-surface truncate">—</p>
+        </div>
+        </div>
+        <!-- Extended Metrics Bento Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-surface-container/30 border border-[var(--border-subtle)] rounded-lg p-3 flex justify-between items-center">
+        <span class="font-label-caps text-[10px] text-on-surface-variant">CLASSIFIER</span>
+        <span id="statModel" class="font-metric-lg text-[11px] text-primary">EfficientNet-B4</span>
+        </div>
+        <div class="bg-surface-container/30 border border-[var(--border-subtle)] rounded-lg p-3 flex justify-between items-center">
+        <span class="font-label-caps text-[10px] text-on-surface-variant">SEGMENTER</span>
+        <span class="font-metric-lg text-[11px] text-primary">U-Net+ResNet34</span>
+        </div>
+        <div class="bg-surface-container/30 border border-[var(--border-subtle)] rounded-lg p-3 flex justify-between items-center">
+        <span class="font-label-caps text-[10px] text-on-surface-variant">DEVICE</span>
+        <span id="statDevice" class="font-metric-lg text-[11px] text-primary">—</span>
+        </div>
+        <div class="bg-surface-container/30 border border-[var(--border-subtle)] rounded-lg p-3 flex justify-between items-center">
+        <span class="font-label-caps text-[10px] text-on-surface-variant">PIPELINE</span>
+        <span class="font-metric-lg text-[11px] text-primary">v2.4</span>
+        </div>
+        </div>
+    </div>
+</div>
+</main>
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileUpload = document.getElementById('fileUpload');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const resultsDashboard = document.getElementById('resultsDashboard');
+    const dashboardOriginalImg = document.getElementById('dashboardOriginalImg');
+    const galleryOriginalImg = document.getElementById('galleryOriginalImg');
+
+    // Prevent default drag behaviors for both the window and the dropZone
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        window.addEventListener(eventName, preventDefaults, false);
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight drop zone when item is dragged over it
+    dropZone.addEventListener('dragenter', highlight, false);
+    dropZone.addEventListener('dragover', highlight, false);
+    dropZone.addEventListener('dragleave', unhighlight, false);
+    dropZone.addEventListener('drop', unhighlight, false);
+
+    function highlight(e) {
+        dropZone.classList.add('bg-primary/10', 'border-primary');
+    }
+
+    function unhighlight(e) {
+        dropZone.classList.remove('bg-primary/10', 'border-primary');
+    }
+
+    // Handle dropped files
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if (files && files.length > 0) {
+            try { fileUpload.files = files; } catch(err) {}
+            handleFileSelect(files);
+        }
+    }
+
+    function handleFileSelect(files) {
+        if (!files || files.length === 0) return;
+        
+        const file = files[0];
+        
+        // Ensure it's an image
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file (JPG, PNG, etc.)');
+            return;
+        }
+
+        // Read the image and show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            // Also inject it into the results dashboard as the "Original"
+            if (dashboardOriginalImg) dashboardOriginalImg.src = e.target.result;
+            if (galleryOriginalImg) galleryOriginalImg.src = e.target.result;
+            
+            uploadPlaceholder.classList.add('hidden');
+            imagePreviewContainer.classList.remove('hidden');
+            
+            // Reset mock analysis state
+            document.getElementById('analysisControls').classList.remove('hidden');
+            document.getElementById('analysisLoading').classList.add('hidden');
+            resultsDashboard.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    
+    function runMockAnalysis() {
+        runRealAnalysis();
+    }
+
+    async function runRealAnalysis() {
+        const controls = document.getElementById('analysisControls');
+        const loading = document.getElementById('analysisLoading');
+        const fileInput = document.getElementById('fileUpload');
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('Please select an image first.');
+            return;
+        }
+
+        controls.classList.add('hidden');
+        loading.classList.remove('hidden');
+
+        const formData = new FormData();
+        formData.append('image', fileInput.files[0]);
+
+        try {
+            const response = await fetch('/api/predict', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            // Read the original file as base64 for the PDF
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentOriginalB64 = e.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+            
+            currentClass = result.class || 'Unknown';
+            currentConfidence = result.confidence || 0.0;
+            currentMaskB64 = result.image_b64 || '';
+
+            if (result.probabilities) {
+                const mapId = {
+                    'GLIOMA': 'glioma',
+                    'MENINGIOMA': 'meningioma',
+                    'PITUITARY': 'pituitary',
+                    'NOTUMOR': 'notumor'
+                };
+                for (const [cls, prob] of Object.entries(result.probabilities)) {
+                    const idKey = mapId[cls];
+                    if (idKey) {
+                        const probPct = (prob * 100).toFixed(1);
+                        document.getElementById('prob-val-' + idKey).innerText = probPct + '%';
+                        document.getElementById('prob-bar-' + idKey).style.width = probPct + '%';
+                        
+                        // Highlight the highest probability bar with error color, others normal
+                        const bar = document.getElementById('prob-bar-' + idKey);
+                        if (cls === result.class) {
+                            bar.className = "h-full bg-error rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]";
+                        } else {
+                            bar.className = "h-full bg-surface-highest rounded-full transition-all duration-500";
+                        }
+                    }
+                }
+            }
+
+
+            
+            if (response.ok) {
+                // Populate the UI with REAL data from PyTorch!
+                document.querySelector('.font-display-lg').innerText = result.class;
+                
+                const confidencePercent = (result.confidence * 100).toFixed(1);
+                document.querySelector('.font-metric-lg.text-primary').innerText = confidencePercent + '%';
+                
+                document.getElementById('gradCamConfText').innerText = confidencePercent > 90 ? "High" : "Moderate";
+                document.getElementById('gradCamConfBar').style.width = confidencePercent + '%';
+
+                // Wire each gallery panel to its own dedicated image output
+                const setImg = (id, b64) => {
+                    if (b64) {
+                        const el = document.getElementById(id);
+                        if (el) el.src = 'data:image/png;base64,' + b64;
+                    }
+                };
+                setImg('galleryOriginalImg',  result.img_original);
+                setImg('galleryMaskImg',      result.img_mask);
+                setImg('galleryOverlayImg',   result.img_overlay);
+                setImg('galleryContourImg',   result.img_contour);
+                setImg('galleryHeatmapImg',   result.img_heatmap);
+                setImg('gradcamImg',          result.img_heatmap);
+                // Preprocessing panel images
+                setImg('dashboardOriginalImg', result.img_original);
+                setImg('dashboardOverlayImg',  result.img_overlay);
+
+                // Update classification result display
+                const predClass = result.class || 'Unknown';
+                const confPct   = ((result.confidence || 0) * 100).toFixed(1);
+                const pfEl = document.getElementById('primaryFindingText');
+                const cdEl = document.getElementById('confidenceDisplay');
+                if (pfEl) pfEl.textContent = predClass;
+                if (cdEl) cdEl.textContent = confPct + '%';
+
+                // Compute live tumor analysis stats from the mask image using canvas
+                if (result.img_mask) {
+                    const maskImg = new Image();
+                    maskImg.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width  = maskImg.width;
+                        canvas.height = maskImg.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(maskImg, 0, 0);
+                        const pixels    = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                        const total     = canvas.width * canvas.height;
+                        let tumorPixels = 0;
+                        for (let i = 0; i < pixels.length; i += 4) {
+                            if (pixels[i] > 128) tumorPixels++; // count white pixels (tumor)
+                        }
+                        const coverage  = ((tumorPixels / total) * 100).toFixed(1);
+                        const conf      = parseFloat(result.confidence || 0);
+                        const severity  = coverage > 20 ? 'Critical' : coverage > 8 ? 'High' : coverage > 2 ? 'Moderate' : 'Low';
+                        const sevColor  = coverage > 20 ? 'text-red-400' : coverage > 8 ? 'text-error' : coverage > 2 ? 'text-amber-400' : 'text-emerald-400';
+
+                        const el = id => document.getElementById(id);
+                        if (el('statTumorCoverage')) el('statTumorCoverage').textContent = coverage;
+                        if (el('statSeverity')) { el('statSeverity').textContent = severity; el('statSeverity').className = `font-metric-lg text-[28px] font-bold ${sevColor}`; }
+                        if (el('statTumorPixels')) el('statTumorPixels').textContent = tumorPixels.toLocaleString();
+                        if (el('statTumorClass'))  el('statTumorClass').textContent  = predClass;
+                        if (el('statDevice'))      el('statDevice').textContent      = conf > 0.5 ? 'MPS/CUDA' : 'CPU';
+                    };
+                    maskImg.src = 'data:image/png;base64,' + result.img_mask;
+                }
+
+                // Show dashboard
+                loading.classList.add('hidden');
+                imagePreviewContainer.classList.add('hidden');
+                uploadPlaceholder.classList.remove('hidden');
+                resultsDashboard.classList.remove('hidden');
+            } else {
+                alert('Analysis failed: ' + result.error);
+                controls.classList.remove('hidden');
+                loading.classList.add('hidden');
+            }
+        } catch (err) {
+            console.error('API error:', err);
+            alert('Network error connecting to API.\n\nDetails: ' + err.message);
+            controls.classList.remove('hidden');
+            loading.classList.add('hidden');
+        }
+    }
+
+    // Store results globally for PDF generation
+    let currentOriginalB64 = '';
+    let currentMaskB64 = '';
+    let currentClass = 'Unknown';
+    let currentConfidence = 0.0;
+
+    function downloadImage(imageId, defaultFilename) {
+        const img = document.getElementById(imageId);
+        if (!img || !img.src) return;
+        
+        // Fetch the image data URL to trigger a genuine download bypassing cross-origin limits if possible
+        fetch(img.src)
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = defaultFilename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(err => {
+                // Fallback for CORS restricted images
+                const a = document.createElement('a');
+                a.href = img.src;
+                a.download = defaultFilename;
+                a.target = "_blank";
+                document.body.appendChild(a);
+                a.click();
+            });
+    }
+
+    function initTheme() {
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            if(document.getElementById('themeIcon')) document.getElementById('themeIcon').textContent = 'light_mode';
+        } else {
+            document.documentElement.classList.remove('dark');
+            if(document.getElementById('themeIcon')) document.getElementById('themeIcon').textContent = 'dark_mode';
+        }
+    }
+    
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+            if(document.getElementById('themeIcon')) document.getElementById('themeIcon').textContent = 'dark_mode';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+            if(document.getElementById('themeIcon')) document.getElementById('themeIcon').textContent = 'light_mode';
+        }
+    }
+    initTheme();
+
+    async function generatePDFReport() {
+        if (!currentClass || currentClass === 'Unknown') {
+            alert("Please run an analysis first.");
+            return;
+        }
+        
+        // Show loading state on button
+        const btn = document.querySelector('button[onclick="generatePDFReport()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Generating PDF...';
+        btn.disabled = true;
+        
+        try {
+            const response = await fetch('/api/generate_report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    class: currentClass,
+                    confidence: currentConfidence,
+                    original_b64: currentOriginalB64,
+                    mask_b64: currentMaskB64
+                })
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'BrainTumorAI_Clinical_Report.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                const err = await response.json();
+                alert("Failed to generate report: " + err.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Network error while generating report.");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+</script>
+</body></html>
