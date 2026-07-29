@@ -9,25 +9,49 @@ import os
 import subprocess
 from PIL import Image
 
-# ─── Patch gradio_client bug BEFORE importing gradio ─────────────────────────
-# Bug: gradio_client/utils.py _json_schema_to_python_type() receives a boolean
-# schema (valid JSON Schema: True/False) and then calls get_type(schema) which
-# does `if "const" in schema` — TypeError when schema is bool, not dict.
-# This was fixed in gradio_client > 0.6.1 but HF Spaces uses the buggy version.
+# ─── Patch 1: gradio_client bool-schema bug ──────────────────────────────────
+# Bug: _json_schema_to_python_type() gets a boolean JSON Schema (True/False)
+# and calls get_type(bool) which does `if "const" in bool` → TypeError.
 try:
     import gradio_client.utils as _gc_utils
+    _orig_gc = _gc_utils._json_schema_to_python_type
 
-    _orig = _gc_utils._json_schema_to_python_type
-
-    def _patched(schema, defs=None):
+    def _patched_gc(schema, defs=None):
         if not isinstance(schema, dict):
             return "Any"
-        return _orig(schema, defs)
+        return _orig_gc(schema, defs)
 
-    _gc_utils._json_schema_to_python_type = _patched
-    print("[patch] gradio_client bool-schema bug patched ✔")
+    _gc_utils._json_schema_to_python_type = _patched_gc
+    print("[patch1] gradio_client bool-schema bug patched ✔")
 except Exception as _e:
-    print(f"[patch] gradio_client patch skipped: {_e}")
+    print(f"[patch1] gradio_client patch skipped: {_e}")
+
+
+# ─── Patch 2: starlette TemplateResponse API break ───────────────────────────
+# Newer starlette changed signature from:
+#   TemplateResponse(name: str, context: dict, ...)   ← old (gradio 4.44.0 uses this)
+# to:
+#   TemplateResponse(request: Request, name: str, ...) ← new
+# This causes the context dict to be passed as template name → unhashable TypeError.
+try:
+    import starlette.templating as _st
+
+    _orig_st = _st.Jinja2Templates.TemplateResponse
+
+    def _patched_st(self, *args, **kwargs):
+        if args and isinstance(args[0], str):
+            # Old-style call: first arg is name (str), second is context (dict)
+            name = args[0]
+            context = dict(args[1]) if len(args) > 1 else kwargs.pop("context", {})
+            request = context.pop("request", None)
+            if request is not None:
+                return _orig_st(self, request, name, context, *args[2:], **kwargs)
+        return _orig_st(self, *args, **kwargs)
+
+    _st.Jinja2Templates.TemplateResponse = _patched_st
+    print("[patch2] starlette TemplateResponse API break patched ✔")
+except Exception as _e:
+    print(f"[patch2] starlette patch skipped: {_e}")
 
 import gradio as gr  # noqa: E402 — must come after patch
 
