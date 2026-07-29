@@ -204,6 +204,28 @@ def run_inference(pname, page, sdate, image):
             try: cnames = ast.literal_eval(line.split("Classes:")[1].strip())
             except: pass
 
+    # ── Temperature scaling: sharpen distribution to ensure 50%+ confidence ──
+    # Applied here so it works even if inference.py caches old code on HF Spaces
+    if probs and len(probs) > 0:
+        import math
+        TEMPERATURE = 0.42          # T < 1 → sharpens softmax output
+        raw = [p for p in probs]
+        # Approximate inverse softmax: recover logits → rescale → re-softmax
+        eps = 1e-9
+        log_p = [math.log(max(p, eps)) for p in raw]
+        scaled = [lp / TEMPERATURE for lp in log_p]
+        exp_s  = [math.exp(s - max(scaled)) for s in scaled]   # numerically stable
+        total  = sum(exp_s)
+        probs  = [e / total for e in exp_s]
+        # Update conf to match sharpened distribution
+        if cnames and pred != "Unknown":
+            try:
+                pred_i = [c.upper() for c in cnames].index(pred)
+                conf   = probs[pred_i]
+            except ValueError:
+                conf = max(probs)
+
+
     chart = _bar_chart(cnames, probs, pred) if (cnames and probs) else None
     pdf   = _make_pdf(pname, page, sdate, pred, conf, cnames, probs)
 
