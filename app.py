@@ -123,7 +123,7 @@ def _make_pdf(
     class_names: list,
     probs: list,
 ) -> str | None:
-    """Generate a PDF report and return its file path, or None on failure."""
+    """Generate a PDF report and return its absolute file path, or None on failure."""
     try:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib import colors
@@ -136,151 +136,143 @@ def _make_pdf(
 
         report_dir = os.path.join(_BASE_DIR, "outputs", "reports")
         os.makedirs(report_dir, exist_ok=True)
-        ts  = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        ts       = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         pdf_path = os.path.join(report_dir, f"NeuroVR_Report_{ts}.pdf")
 
-        doc  = SimpleDocTemplate(pdf_path, pagesize=A4,
-                                  topMargin=2*cm, bottomMargin=2*cm,
-                                  leftMargin=2*cm, rightMargin=2*cm)
+        doc    = SimpleDocTemplate(pdf_path, pagesize=A4,
+                                   topMargin=1.5*cm, bottomMargin=1.5*cm,
+                                   leftMargin=2*cm, rightMargin=2*cm)
         styles = getSampleStyleSheet()
         story  = []
 
-        # ── Title ───────────────────────────────────────────────────────────
-        title_style = ParagraphStyle(
-            "Title", parent=styles["Title"],
-            fontSize=20, textColor=colors.HexColor("#1e40af"),
-            spaceAfter=6,
-        )
-        story.append(Paragraph("🧠 NeuroVR — BrainTumor AI Report", title_style))
-        story.append(HRFlowable(width="100%", thickness=1,
-                                color=colors.HexColor("#3b82f6")))
+        BLUE  = colors.HexColor("#1e40af")
+        LBLUE = colors.HexColor("#eff6ff")
+        GRID  = colors.HexColor("#bfdbfe")
+        GREY  = colors.HexColor("#64748b")
+
+        def h2(text):
+            return Paragraph(text, ParagraphStyle(
+                "H2", parent=styles["Heading2"], textColor=BLUE, spaceBefore=10))
+
+        def tbl(data, col_widths):
+            t = Table(data, colWidths=col_widths)
+            t.setStyle(TableStyle([
+                ("BACKGROUND",    (0, 0), (-1, 0),  BLUE),
+                ("TEXTCOLOR",     (0, 0), (-1, 0),  colors.white),
+                ("FONTNAME",      (0, 0), (-1, 0),  "Helvetica-Bold"),
+                ("FONTSIZE",      (0, 0), (-1, -1), 10),
+                ("GRID",          (0, 0), (-1, -1), 0.5, GRID),
+                ("ROWBACKGROUNDS",(0, 1), (-1, -1),
+                 [colors.white, colors.HexColor("#f8fafc")]),
+                ("FONTNAME",      (0, 1), (0, -1),  "Helvetica-Bold"),
+                ("BACKGROUND",    (0, 1), (0, -1),  LBLUE),
+                ("PADDING",       (0, 0), (-1, -1), 6),
+            ]))
+            return t
+
+        # Title
+        story.append(Paragraph(
+            "🧠 NeuroVR — BrainTumor AI Report",
+            ParagraphStyle("T", parent=styles["Title"], fontSize=18, textColor=BLUE),
+        ))
+        story.append(HRFlowable(width="100%", thickness=1, color=BLUE))
+        story.append(Spacer(1, 0.3*cm))
+
+        # Patient info
+        story.append(h2("Patient Information"))
+        story.append(tbl(
+            [["Field", "Value"],
+             ["Patient Name", patient_name or "N/A"],
+             ["Age",          patient_age  or "N/A"],
+             ["Scan Date",    scan_date    or datetime.date.today().isoformat()],
+             ["Report Date",  datetime.datetime.now().strftime("%Y-%m-%d %H:%M")]],
+            [5*cm, 11*cm],
+        ))
         story.append(Spacer(1, 0.4*cm))
 
-        # ── Patient info ────────────────────────────────────────────────────
-        info_data = [
-            ["Patient Name", patient_name or "N/A"],
-            ["Age",          patient_age  or "N/A"],
-            ["Scan Date",    scan_date    or datetime.date.today().isoformat()],
-            ["Report Date",  datetime.datetime.now().strftime("%Y-%m-%d %H:%M")],
-        ]
-        info_table = Table(info_data, colWidths=[4*cm, 12*cm])
-        info_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#eff6ff")),
-            ("TEXTCOLOR",  (0, 0), (0, -1), colors.HexColor("#1e40af")),
-            ("FONTNAME",   (0, 0), (0, -1), "Helvetica-Bold"),
-            ("FONTSIZE",   (0, 0), (-1, -1), 10),
-            ("GRID",       (0, 0), (-1, -1), 0.5, colors.HexColor("#bfdbfe")),
-            ("ROWBACKGROUNDS", (0, 0), (-1, -1),
-             [colors.white, colors.HexColor("#f8fafc")]),
-            ("PADDING",    (0, 0), (-1, -1), 6),
-        ]))
-        story.append(info_table)
-        story.append(Spacer(1, 0.5*cm))
-
-        # ── Diagnosis ───────────────────────────────────────────────────────
-        story.append(Paragraph("Diagnosis Summary",
-                               ParagraphStyle("H2", parent=styles["Heading2"],
-                                              textColor=colors.HexColor("#1e40af"))))
+        # Diagnosis
         severity = (
-            "CLEAR — No tumor detected" if pred_class.upper() == "NOTUMOR"
-            else "CRITICAL — High confidence tumor" if confidence > 0.95
+            "CLEAR — No tumor detected"              if pred_class.upper() == "NOTUMOR"
+            else "CRITICAL — High confidence tumor"  if confidence > 0.95
             else "HIGH — Tumor likely, confirm with specialist"
         )
-        diag_data = [
-            ["Field", "Value"],
-            ["Primary Finding", pred_class.upper()],
-            ["Confidence",      f"{confidence*100:.1f}%"],
-            ["Severity",        severity],
-            ["Model",           "EfficientNet-B4 + U-Net/ResNet34"],
+        story.append(h2("Diagnosis Summary"))
+        story.append(tbl(
+            [["Field", "Value"],
+             ["Primary Finding", pred_class.upper()],
+             ["Confidence",      f"{confidence*100:.1f}%"],
+             ["Severity",        severity],
+             ["Model",           "EfficientNet-B4 + U-Net/ResNet34"]],
+            [5*cm, 11*cm],
+        ))
+        story.append(Spacer(1, 0.4*cm))
+
+        # Class probabilities
+        if class_names and probs:
+            story.append(h2("Class Probabilities"))
+            prob_rows = [["Class", "Probability"]] + [
+                [n.capitalize(), f"{p*100:.1f}%"]
+                for n, p in zip(class_names, probs)
+            ]
+            story.append(tbl(prob_rows, [8*cm, 8*cm]))
+            story.append(Spacer(1, 0.4*cm))
+
+        # Segmentation images — simple 1-per-row with caption
+        img_files = [
+            ("original.png",    "Original MRI"),
+            ("binary_mask.png", "Binary Mask"),
+            ("green_overlay.png","Green Overlay"),
+            ("contour.png",     "Contour"),
+            ("heatmap.png",     "Probability Heatmap"),
         ]
-        diag_table = Table(diag_data, colWidths=[4*cm, 12*cm])
-        diag_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e40af")),
-            ("TEXTCOLOR",  (0, 0), (-1, 0), colors.white),
-            ("FONTNAME",   (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE",   (0, 0), (-1, -1), 10),
-            ("GRID",       (0, 0), (-1, -1), 0.5, colors.HexColor("#bfdbfe")),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1),
-             [colors.white, colors.HexColor("#f8fafc")]),
-            ("FONTNAME",   (0, 1), (0, -1), "Helvetica-Bold"),
-            ("PADDING",    (0, 0), (-1, -1), 6),
-        ]))
-        story.append(diag_table)
-        story.append(Spacer(1, 0.5*cm))
+        existing = [(f, lbl) for f, lbl in img_files
+                    if os.path.exists(os.path.join(PRED_DIR, f))]
+        if existing:
+            story.append(h2("Segmentation Output Gallery"))
+            # Pack images 2 per row
+            IMG_W, IMG_H = 7*cm, 5*cm
+            for i in range(0, len(existing), 2):
+                row_imgs = []
+                row_lbls = []
+                for fname, lbl in existing[i:i+2]:
+                    p = os.path.join(PRED_DIR, fname)
+                    row_imgs.append(RLImage(p, width=IMG_W, height=IMG_H))
+                    row_lbls.append(Paragraph(
+                        lbl, ParagraphStyle("Cap", fontSize=8, textColor=GREY,
+                                            alignment=1)))
+                # pad to 2 cols if odd
+                while len(row_imgs) < 2:
+                    row_imgs.append(Paragraph("", styles["Normal"]))
+                    row_lbls.append(Paragraph("", styles["Normal"]))
+                img_tbl = Table(
+                    [row_imgs, row_lbls],
+                    colWidths=[IMG_W + 0.5*cm, IMG_W + 0.5*cm],
+                )
+                img_tbl.setStyle(TableStyle([
+                    ("ALIGN",   (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN",  (0, 0), (-1, -1), "MIDDLE"),
+                    ("PADDING", (0, 0), (-1, -1), 4),
+                ]))
+                story.append(img_tbl)
+                story.append(Spacer(1, 0.2*cm))
 
-        # ── Class probabilities ─────────────────────────────────────────────
-        story.append(Paragraph("Class Probabilities",
-                               ParagraphStyle("H2", parent=styles["Heading2"],
-                                              textColor=colors.HexColor("#1e40af"))))
-        prob_data = [["Class", "Probability"]] + [
-            [n.capitalize(), f"{p*100:.1f}%"]
-            for n, p in zip(class_names, probs)
-        ]
-        prob_table = Table(prob_data, colWidths=[8*cm, 8*cm])
-        prob_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e40af")),
-            ("TEXTCOLOR",  (0, 0), (-1, 0), colors.white),
-            ("FONTNAME",   (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE",   (0, 0), (-1, -1), 10),
-            ("GRID",       (0, 0), (-1, -1), 0.5, colors.HexColor("#bfdbfe")),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1),
-             [colors.white, colors.HexColor("#f8fafc")]),
-            ("ALIGN",      (1, 1), (1, -1), "CENTER"),
-            ("PADDING",    (0, 0), (-1, -1), 6),
-        ]))
-        story.append(prob_table)
-        story.append(Spacer(1, 0.5*cm))
-
-        # ── Segmentation images ─────────────────────────────────────────────
-        img_files = {
-            "Original MRI":        "original.png",
-            "Binary Mask":         "binary_mask.png",
-            "Green Overlay":       "green_overlay.png",
-            "Contour":             "contour.png",
-            "Probability Heatmap": "heatmap.png",
-        }
-        story.append(Paragraph("Segmentation Output Gallery",
-                               ParagraphStyle("H2", parent=styles["Heading2"],
-                                              textColor=colors.HexColor("#1e40af"))))
-        img_row = []
-        for label, fname in img_files.items():
-            p = os.path.join(PRED_DIR, fname)
-            if os.path.exists(p):
-                img_row.append([
-                    RLImage(p, width=3.2*cm, height=3.2*cm),
-                    Paragraph(label, ParagraphStyle("Cap", fontSize=7,
-                              textColor=colors.HexColor("#64748b"),
-                              alignment=1)),
-                ])
-        # 2-column layout
-        pairs = [img_row[i:i+2] for i in range(0, len(img_row), 2)]
-        for pair in pairs:
-            row_data = []
-            for cell_stack in pair:
-                row_data.extend(cell_stack)
-            t = Table([row_data[:2], row_data[2:]] if len(row_data) == 4
-                      else [row_data], colWidths=[3.5*cm]*min(len(pair)*2, 4))
-            story.append(t)
-            story.append(Spacer(1, 0.3*cm))
-
-        # ── Disclaimer ─────────────────────────────────────────────────────
-        story.append(Spacer(1, 0.5*cm))
-        story.append(HRFlowable(width="100%", thickness=0.5,
-                                color=colors.HexColor("#94a3b8")))
+        # Disclaimer
+        story.append(Spacer(1, 0.3*cm))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=GREY))
         story.append(Paragraph(
-            "⚠️ This report is generated by an AI model for educational/research purposes only. "
-            "It is NOT a substitute for professional medical diagnosis. "
+            "⚠️ This report is generated by an AI model for educational/research purposes "
+            "only. It is NOT a substitute for professional medical diagnosis. "
             "Always consult a qualified medical professional.",
-            ParagraphStyle("Disclaimer", fontSize=8,
-                           textColor=colors.HexColor("#64748b"),
-                           spaceAfter=0),
+            ParagraphStyle("D", fontSize=8, textColor=GREY),
         ))
 
         doc.build(story)
+        print(f"[PDF] Saved: {pdf_path}")
         return pdf_path
 
     except Exception as e:
-        print(f"[PDF] Failed: {e}")
+        import traceback
+        print(f"[PDF] ERROR: {e}\n{traceback.format_exc()}")
         return None
 
 
