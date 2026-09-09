@@ -1,81 +1,68 @@
-# ─── Model Weights (large binary files) ────────────────────────────────────────
-models/**/*.pth
-models/**/*.pt
-models/**/*.h5
-models/**/*.ckpt
-# Keep directory structure
-!models/classifier/.gitkeep
-!models/segmenter/.gitkeep
+# NeuroVR 3D — Git Ignore
 
-# ─── Datasets (too large for GitHub) ───────────────────────────────────────────
-data/classification/
-data/segmentation/
-# Keep directory structure
-!data/classification/.gitkeep
-!data/segmentation/.gitkeep
-
-# ─── Generated Outputs ──────────────────────────────────────────────────────────
-outputs/predictions/*.png
-outputs/predictions/*.jpg
-outputs/uploads/
-outputs/plots/*.png
-outputs/plots/*.jpg
-# Keep directory structure
-!outputs/predictions/.gitkeep
-!outputs/plots/.gitkeep
-!outputs/uploads/.gitkeep
-
-# ─── Python ─────────────────────────────────────────────────────────────────────
+# ── Python cache ──────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-*.egg
+*.pyo
+.pytest_cache/
+.mypy_cache/
 *.egg-info/
 dist/
 build/
 .eggs/
-.Python
-env/
-venv/
+
+# ── Virtual environments ───────────────────────────────────────────────────────
 .venv/
+venv/
+env/
+
+# ── Runtime outputs (generated at runtime — do not commit) ───────────────────
+outputs/
+!outputs/.gitkeep
+
+# ── MRI / Medical imaging data (NEVER commit patient data) ────────────────────
+*.nii
+*.nii.gz
+*.dcm
+*.mha
+*.mhd
+*.nrrd
+# Exception: small legally-distributable demo files in data/real_brats/
+!data/real_brats/*.nii.gz
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
 .env
-pip-log.txt
-pip-delete-this-directory.txt
+.env.local
+*.env
 
-# ─── Jupyter (removed but just in case) ─────────────────────────────────────────
-.ipynb_checkpoints/
-*.ipynb
-
-# ─── macOS ──────────────────────────────────────────────────────────────────────
+# ── macOS ─────────────────────────────────────────────────────────────────────
 .DS_Store
-.AppleDouble
-.LSOverride
 ._*
 .Spotlight-V100
 .Trashes
 
-# ─── Windows ─────────────────────────────────────────────────────────────────────
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
 
-# ─── Editors / IDEs ──────────────────────────────────────────────────────────────
-.vscode/
-.idea/
+# ── Temporary files ───────────────────────────────────────────────────────────
+*.tmp
+*.temp
+*.bak
+*.old
 *.swp
 *.swo
 *~
 
-# ─── Temporary / Misc ────────────────────────────────────────────────────────────
-*.log
-*.tmp
-*.bak
-~$*.docx
-*.lock
+# ── Node (if frontend build tools are added later) ───────────────────────────
+node_modules/
+.cache/
+.parcel-cache/
+.vite/
 
-# ─── Word temp files ─────────────────────────────────────────────────────────────
-~$*.docx
-~$*.doc
-~$*.xlsx
+# ── Large model checkpoints — use scripts/download_bundle.py instead ─────────
+# models/monai/ is intentionally committed (small config + weights needed offline)
+# models/classifier/ and models/segmenter/ were archived — not in production
+
+# ── Archive (reference only — not deployed) ───────────────────────────────────
+archive/

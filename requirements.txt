@@ -1,35 +1,44 @@
-# Core ML
-torch>=2.0.0
-torchvision>=0.15.0
-segmentation-models-pytorch>=0.3.0
+# NeuroVR 3D — Python Dependencies
+# Research prototype · Not for clinical use
+#
+# Install: pip install -r requirements.txt
 
-# Image processing
-opencv-python>=4.7.0
-albumentations>=1.3.0
-Pillow>=9.5.0
-scikit-image>=0.20.0
+# ── Core ML ───────────────────────────────────────────────────────────────────
+torch>=2.1.0
+torchvision>=0.16.0          # Required by some MONAI transforms
 
-# Data & numerics
+# ── MONAI (Medical Open Network for AI) ───────────────────────────────────────
+monai>=1.3.0                  # 3D medical AI framework + BraTS model zoo
+
+# ── 3D MRI I/O ────────────────────────────────────────────────────────────────
+nibabel>=5.0.0                # NIfTI (.nii/.nii.gz) read/write
+pydicom>=2.4.0                # DICOM series loading
+
+# ── 3D Image Processing ───────────────────────────────────────────────────────
+scipy>=1.10.0                 # Resampling, morphological operations
+scikit-image>=0.20.0          # Marching Cubes, connected components, resize
+
+# ── 3D Mesh Generation / GLB Export ──────────────────────────────────────────
+trimesh>=4.0.0                # Mesh smoothing, export
+
+# ── Numerics ──────────────────────────────────────────────────────────────────
 numpy>=1.24.0
-pandas>=1.5.0
-scikit-learn>=1.2.0
 
-# Visualization
-matplotlib>=3.7.0
-seaborn>=0.12.0
+# ── Web Server ────────────────────────────────────────────────────────────────
+flask>=3.0.0
+flask-cors>=4.0.0
 
-# Configuration & utilities
+# ── Configuration ─────────────────────────────────────────────────────────────
 PyYAML>=6.0
-tqdm>=4.65.0
 
-# Web server
-flask>=2.3.0
+# ── Utilities ─────────────────────────────────────────────────────────────────
+tqdm>=4.65.0                  # Progress bars during model download
 
-# PDF report generation
-reportlab>=4.0.0
+# ── Image I/O (2D slice PNG export for split-view) ───────────────────────────
+Pillow>=10.0.0
 
-# HF Spaces forces gradio[oauth]==4.44.0 which imports HfFolder from huggingface_hub.
-# HfFolder was removed in huggingface_hub>=0.25.0, so we pin it below that.
-# pip resolves this to 0.24.7 (compatible with datasets and gradio).
-# Do NOT add a gradio version here — HF Spaces forces its own version.
-huggingface_hub>=0.19.3,<0.25.0
+# ── Visualization (2D slice rendering fallback) ───────────────────────────────
+matplotlib>=3.7.0
+
+# ── MONAI model downloader ────────────────────────────────────────────────────
+huggingface_hub>=0.19.3,<0.25.0   # Used by scripts/download_bundle.py

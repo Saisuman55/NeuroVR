@@ -1,59 +1,91 @@
+# NeuroVR 3D — Configuration
+# Research prototype — NOT for clinical diagnosis
+
 seed: 42
 
+# ── Model ─────────────────────────────────────────────────────────────────────
+model:
+  name: brats_mri_segmentation
+  source: monai_zoo
+  version: "0.4.2"
+  cache_dir: models/monai/brats_mri_segmentation
+  description: >
+    MONAI BraTS MRI Segmentation model from the official MONAI Model Zoo.
+    Input: 4-channel [T1, T1ce, T2, FLAIR] volumetric MRI
+    Output: 3-channel [TC, WT, ET] tumor region masks
+
+# ── Input ─────────────────────────────────────────────────────────────────────
+input:
+  supported_formats:
+    - .nii
+    - .nii.gz
+    - .dcm         # via DICOM adapter
+  modalities:
+    - t1            # T1-weighted (structural)
+    - t1ce          # T1 with contrast enhancement
+    - t2            # T2-weighted
+    - flair         # T2-FLAIR (perilesional edema)
+  max_upload_bytes: 524288000   # 500 MB per file
+
+# ── Preprocessing ─────────────────────────────────────────────────────────────
+preprocessing:
+  target_spacing:               # mm per voxel
+    - 1.0
+    - 1.0
+    - 1.0
+  roi_size:                     # Sliding-window patch size — 64 for fast CPU demo
+    - 64
+    - 64
+    - 64
+  normalization: z_score        # z_score | min_max
+  crop_foreground: true
+
+# ── Inference ─────────────────────────────────────────────────────────────────
+inference:
+  overlap: 0.25                 # Reduced for fast CPU demo (0.5 for production)
+  sw_batch_size: 1              # Patches per forward pass
+  device: auto                  # auto | cuda | mps | cpu
+  threshold: 0.5                # Probability threshold for binary mask
+
+# ── Reconstruction ────────────────────────────────────────────────────────────
+reconstruction:
+  smoothing: 3                  # Laplacian smoothing iterations (0 = off)
+  minimum_component_size: 100   # Voxels — smaller components are removed
+  marching_cubes_step: 1        # Step size (1 = full res, 2 = half res)
+  brain_surface_step: 2         # Step size for brain surface mesh
+
+# ── Visualization ─────────────────────────────────────────────────────────────
+visualization:
+  default_opacity:
+    brain: 0.18
+    tumor_whole: 0.88
+    tumor_core: 0.90
+    tumor_enhancing: 0.92
+  tumor_colors:
+    whole: "#0ea5e9"            # Cyan-blue
+    core: "#ef4444"             # Red
+    enhancing: "#f59e0b"        # Amber
+
+# ── WebXR ─────────────────────────────────────────────────────────────────────
+webxr:
+  enabled: true
+  ar_features:
+    - local
+    - hit-test
+  vr_features:
+    - local-floor
+    - bounded-floor
+    - hand-tracking
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
 paths:
-  data_classification: data/classification
-  data_segmentation: data/segmentation/kaggle_3m
-  model_classifier: models/classifier/brain_tumor_classifier.pth
-  model_segmenter: models/segmenter/brain_tumor_segmenter.pth
   outputs: outputs
+  models: models
+  demo_data: data/real_brats
 
-classification:
-  model_name: efficientnet_b4
-  img_size: 380
-  num_classes: 4
-  batch_size: 8
-  epochs: 50
-  learning_rate: 0.0001
-  dropout: 0.2
-  fine_tune_unfreeze_layers: 15
-  val_split: 0.1
-  class_names:
-    - glioma
-    - meningioma
-    - notumor
-    - pituitary
-  augmentation:
-    random_flip: horizontal
-    random_rotation: 0.3
-    random_zoom: 0.2
-    random_contrast: 0.2
-    elastic_transform: 0.2
-    grid_distortion: 0.2
-    optical_distortion: 0.2
-    gaussian_noise: 0.1
-    cutout: 0.1
-  early_stopping_patience: 15
-  reduce_lr_patience: 5
-  fine_tune_lr: 0.00001
-  fine_tune_epochs: 50
-  use_class_weights: false
-  label_smoothing: 0.1
-  use_focal_loss: false
-  focal_loss_gamma: 2.0
-
-segmentation:
-  encoder: resnet34
-  encoder_weights: imagenet
-  img_size: 128
-  in_channels: 3
-  classes: 1
-  activation: sigmoid
-  batch_size: 16
-  epochs: 70  # Increased from 50
-  learning_rate: 0.00005  # Reduced from 0.0001
-  early_stopping_patience: 10  # Increased from 7
-  cosine_annealing_tmax: 15  # Increased from 10
-  bce_weight: 0.5
-  dice_weight: 0.5
-  mask_suffix: _mask
-  val_split: 0.2
+# ── Server ─────────────────────────────────────────────────────────────────────
+server:
+  host: "0.0.0.0"
+  port: 7861
+  debug: false
+  threaded: true

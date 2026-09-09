@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroVR 3D — Brain Tumor Analysis</title>
+  <meta name="description" content="NeuroVR 3D: AI-powered volumetric MRI brain tumor segmentation, anatomical localization, and AR/VR visualization. Research prototype — not for clinical use." />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Three.js importmap — resolves bare 'three' specifiers to CDN without a bundler -->
+  <!-- RoomEnvironment is part of three/addons/ so no extra entry needed -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+  <header class="app-header" role="banner">
+    <div class="header-brand">
+      <span class="brand-icon" aria-hidden="true">🧠</span>
+      <div class="brand-text">
+        <span class="brand-name">NeuroVR 3D</span>
+        <span class="brand-sub">Brain Tumor Analysis</span>
+      </div>
+    </div>
+
+    <span class="header-session" id="headerSession" aria-label="Current session">—</span>
+
+    <div class="header-status">
+      <div class="status-pill" id="systemStatusPill" role="status" aria-live="polite">
+        <span class="status-dot" id="systemDot"></span>
+        <span id="systemStatusText">SYSTEM READY</span>
+        <span class="text-mono" id="systemDevice" style="font-size:10px;color:var(--text-muted);margin-left:4px;"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════ WORKSTATION ═══════════════════ -->
+  <main class="workstation" role="main">
+
+    <!-- ───────── LEFT CONTROL PANEL ───────── -->
+    <aside class="left-panel" aria-label="Control panel">
+
+      <!-- SCAN -->
+      <details class="ctrl-section" open id="sectionScan">
+        <summary>
+          <span>Scan</span>
+          <span class="ctrl-section-chevron">▾</span>
+        </summary>
+        <div class="ctrl-section-body">
+
+          <!-- Upload zone -->
+          <div class="upload-zone" id="uploadZone" role="button" aria-label="Upload MRI NIfTI files"
+               tabindex="0" draggable="true"
+               title="Drop NIfTI files or click to browse">
+            <span class="upload-zone-icon">📂</span>
+            <span class="upload-zone-text">Drop NIfTI volumes here</span>
+            <span class="upload-zone-hint">.nii / .nii.gz</span>
+          </div>
+          <input type="file" id="fileInput" multiple accept=".nii,.nii.gz"
+                 style="display:none" aria-label="Choose NIfTI files" />
+
+          <!-- Modality status -->
+          <div class="modality-list" id="modalityList" style="display:none">
+            <div class="modality-item">
+              <span class="modality-name">T1</span>
+              <span class="modality-status miss" id="mod-t1">—</span>
+            </div>
+            <div class="modality-item">
+              <span class="modality-name">T1c</span>
+              <span class="modality-status miss" id="mod-t1ce">—</span>
+            </div>
+            <div class="modality-item">
+              <span class="modality-name">T2</span>
+              <span class="modality-status miss" id="mod-t2">—</span>
+            </div>
+            <div class="modality-item">
+              <span class="modality-name">FLAIR</span>
+              <span class="modality-status miss" id="mod-flair">—</span>
+            </div>
+          </div>
+
+          <!-- Error card -->
+          <div class="error-card hidden" id="uploadError" role="alert">
+            <span class="error-title">Upload Error</span>
+            <span class="error-msg" id="uploadErrorMsg"></span>
+          </div>
+
+          <!-- Action buttons -->
+          <button class="btn btn-primary" id="btnAnalyze" disabled
+                  aria-label="Run 3D MRI segmentation">
+            ▶ Run 3D Analysis
+          </button>
+          <button class="btn btn-demo" id="btnDemo"
+                  aria-label="Run demonstration with sample data">
+            ⚗ Demo Mode <span style="opacity:.5;font-size:9px;margin-left:3px;">(sample data)</span>
+          </button>
+
+          <!-- Progress -->
+          <div id="pipelineProgress" class="hidden">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+            <div class="pipeline-list" id="pipelineList">
+              <div class="pipeline-step" id="step-load">
+                <span class="step-icon">○</span>
+                <span class="step-text">Loading volumes</span>
+              </div>
+              <div class="pipeline-step" id="step-preprocess">
+                <span class="step-icon">○</span>
+                <span class="step-text">Preprocessing</span>
+              </div>
+              <div class="pipeline-step" id="step-segment">
+                <span class="step-icon">○</span>
+                <span class="step-text">MONAI segmentation</span>
+              </div>
+              <div class="pipeline-step" id="step-measure">
+                <span class="step-icon">○</span>
+                <span class="step-text">Measurements</span>
+              </div>
+              <div class="pipeline-step" id="step-localize">
+                <span class="step-icon">○</span>
+                <span class="step-text">Anatomical localization</span>
+              </div>
+              <div class="pipeline-step" id="step-mesh">
+                <span class="step-icon">○</span>
+                <span class="step-text">3D reconstruction</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </details>
+
+      <!-- ANATOMY (view presets) -->
+      <details class="ctrl-section" open id="sectionAnatomy">
+        <summary>
+          <span>Anatomy</span>
+          <span class="ctrl-section-chevron">▾</span>
+        </summary>
+        <div class="ctrl-section-body">
+
+          <div class="ctrl-label">View</div>
+          <div class="btn-group" role="group" aria-label="Anatomical view">
+            <button class="btn-view active" id="view3d"     data-view="3d"       aria-pressed="true">3D</button>
+            <button class="btn-view"        id="viewAxial"  data-view="axial"    aria-pressed="false">Axial</button>
+            <button class="btn-view"        id="viewCoronal"data-view="coronal"  aria-pressed="false">Coronal</button>
+            <button class="btn-view"        id="viewSagittal"data-view="sagittal"aria-pressed="false">Sagittal</button>
+          </div>
+
+          <!-- Slice slider (shows when not in 3D) -->
+          <div id="sliceControl" class="slider-row hidden">
+            <div class="slider-header">
+              <span class="slider-name" id="sliceLabel">Axial Slice</span>
+              <span class="slider-val" id="sliceIndexDisplay">—</span>
+            </div>
+            <input type="range" id="sliceSlider" min="0" max="90" value="45"
+                   aria-label="Slice position" />
+          </div>
+
+          <div class="ctrl-label" style="margin-top:4px;">Orientation</div>
+          <div class="btn-group" role="group" aria-label="Camera direction">
+            <button class="btn-dir" data-dir="front"   aria-label="Front view">ANT</button>
+            <button class="btn-dir" data-dir="back"    aria-label="Back view">POST</button>
+            <button class="btn-dir" data-dir="left"    aria-label="Patient left">L</button>
+            <button class="btn-dir" data-dir="right"   aria-label="Patient right">R</button>
+            <button class="btn-dir" data-dir="top"     aria-label="Superior view">SUP</button>
+            <button class="btn-dir" data-dir="bottom"  aria-label="Inferior view">INF</button>
+          </div>
+
+          <button class="btn btn-secondary" id="btnFocusTumor" disabled
+                  aria-label="Focus camera on tumor centroid"
+                  data-tip="Center camera on tumor">
+            ⊙ Focus Tumor
+          </button>
+
+        </div>
+      </details>
+
+      <!-- ANATOMY (Regions + educational info) -->
+      <details class="ctrl-section" id="sectionRegions" open>
+        <summary>
+          <span>Anatomy</span>
+          <span class="ctrl-section-chevron">▾</span>
+        </summary>
+        <div class="ctrl-section-body">
+          <button class="btn-region-all active" id="regionAll"
+                  aria-pressed="true" aria-label="Show all regions">
+            All Regions
+          </button>
+          <div class="btn-group" role="group" aria-label="Anatomical region filter">
+            <button class="btn-region frontal"    data-region="frontal"    aria-pressed="false">
+              <span class="region-dot" style="background:var(--region-frontal)"></span>Frontal
+            </button>
+            <button class="btn-region parietal"   data-region="parietal"   aria-pressed="false">
+              <span class="region-dot" style="background:var(--region-parietal)"></span>Parietal
+            </button>
+            <button class="btn-region temporal"   data-region="temporal"   aria-pressed="false">
+              <span class="region-dot" style="background:var(--region-temporal)"></span>Temporal
+            </button>
+            <button class="btn-region occipital"  data-region="occipital"  aria-pressed="false">
+              <span class="region-dot" style="background:var(--region-occipital)"></span>Occipital
+            </button>
+            <button class="btn-region cerebellum" data-region="cerebellum" aria-pressed="false">
+              <span class="region-dot" style="background:var(--region-cerebellum)"></span>Cereb.
+            </button>
+            <button class="btn-region brainstem"  data-region="brainstem"  aria-pressed="false">
+              <span class="region-dot" style="background:var(--region-brainstem)"></span>Brainstem
+            </button>
+          </div>
+
+          <!-- Anatomy info card — shown when a lobe is selected -->
+          <div id="anatomyInfoCard" class="anatomy-card" style="display:none;" role="region" aria-live="polite" aria-label="Anatomical region information">
+            <div class="anatomy-card-header">
+              <span class="anatomy-card-dot" id="anatomyCardDot"></span>
+              <span class="anatomy-card-name" id="anatomyRegionName">—</span>
+            </div>
+            <div class="anatomy-card-row">
+              <span class="anatomy-card-lbl">Location</span>
+              <span class="anatomy-card-val" id="anatomyRegionLoc">—</span>
+            </div>
+            <div class="anatomy-card-row">
+              <span class="anatomy-card-lbl">Function</span>
+              <span class="anatomy-card-val" id="anatomyRegionFn">—</span>
+            </div>
+            <div class="anatomy-disclaimer">
+              ⚠ Educational reference only. Not a clinical diagnosis.
+            </div>
+          </div>
+
+        </div>
+      </details>
+
+      <!-- VISUALIZATION -->
+      <details class="ctrl-section" id="sectionVisualization">
+        <summary>
+          <span>Visualization</span>
+          <span class="ctrl-section-chevron">▾</span>
+        </summary>
+        <div class="ctrl-section-body">
+
+          <!-- Visibility toggles -->
+          <div class="ctrl-label">Visibility</div>
+
+          <div class="toggle-row">
+            <span class="toggle-dot" id="dot-brain"
+                  style="background:var(--text-secondary);border-color:var(--text-muted)"
+                  role="button" tabindex="0" aria-label="Toggle brain visibility"
+                  data-toggle="brain"></span>
+            <span class="toggle-label" id="lbl-brain" data-toggle="brain"
+                  style="cursor:pointer">Brain</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--accent-green);font-weight:600">ON</span>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-dot" id="dot-tumor_whole"
+                  style="background:var(--accent-cyan)"
+                  role="button" tabindex="0" aria-label="Toggle whole tumor visibility"
+                  data-toggle="tumor_whole"></span>
+            <span class="toggle-label" id="lbl-tumor_whole" data-toggle="tumor_whole"
+                  style="cursor:pointer">Whole Tumor</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--accent-green);font-weight:600" id="vis-tumor_whole">ON</span>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-dot" id="dot-tumor_core"
+                  style="background:var(--accent-red)"
+                  role="button" tabindex="0" aria-label="Toggle tumor core visibility"
+                  data-toggle="tumor_core"></span>
+            <span class="toggle-label" id="lbl-tumor_core" data-toggle="tumor_core"
+                  style="cursor:pointer">Tumor Core</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--accent-green);font-weight:600" id="vis-tumor_core">ON</span>
+          </div>
+
+          <div class="toggle-row">
+            <span class="toggle-dot" id="dot-tumor_enhancing"
+                  style="background:var(--accent-amber)"
+                  role="button" tabindex="0" aria-label="Toggle enhancing tumor visibility"
+                  data-toggle="tumor_enhancing"></span>
+            <span class="toggle-label" id="lbl-tumor_enhancing" data-toggle="tumor_enhancing"
+                  style="cursor:pointer">Enhancing</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--accent-green);font-weight:600" id="vis-tumor_enhancing">ON</span>
+          </div>
+
+          <!-- Opacity sliders -->
+          <div class="ctrl-label" style="margin-top:8px;">Opacity</div>
+
+          <div class="slider-row">
+            <div class="slider-header">
+              <span class="slider-name">Brain</span>
+              <span class="slider-val" id="valBrainOpacity">88%</span>
+            </div>
+            <input type="range" id="brainOpacity" min="0" max="100" value="88"
+                   aria-label="Brain opacity"
+                   oninput="ui.setBrainOpacity(this.value)" />
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-header">
+              <span class="slider-name">Tumor</span>
+              <span class="slider-val" id="valTumorOpacity">92%</span>
+            </div>
+            <input type="range" id="tumorOpacity" min="0" max="100" value="92"
+                   aria-label="Tumor opacity"
+                   oninput="ui.setTumorOpacity(this.value)" />
+          </div>
+
+          <!-- Clip Z (section plane) -->
+          <div class="ctrl-label" style="margin-top:8px;">Section Plane</div>
+          <div class="btn-group" role="group" aria-label="Section view">
+            <button class="btn-view active" id="sectionNone"  data-section="none" >3D</button>
+            <button class="btn-view"        id="sectionAx"    data-section="axial">AX</button>
+            <button class="btn-view"        id="sectionCor"   data-section="coronal">COR</button>
+            <button class="btn-view"        id="sectionSag"   data-section="sagittal">SAG</button>
+          </div>
+          <div class="slider-row" id="clipRow" style="margin-top:4px;">
+            <div class="slider-header">
+              <span class="slider-name">Clip position</span>
+              <span class="slider-val" id="valClip">50%</span>
+            </div>
+            <input type="range" id="clipPos" min="0" max="100" value="50"
+                   aria-label="Clip plane position"
+                   oninput="ui.setClipPosition(this.value)" />
+          </div>
+
+        </div>
+      </details>
+
+      <!-- IMMERSIVE -->
+      <details class="ctrl-section" id="sectionImmersive">
+        <summary>
+          <span>Immersive</span>
+          <span class="ctrl-section-chevron">▾</span>
+        </summary>
+        <div class="ctrl-section-body">
+          <button class="btn btn-ar" id="btnAR" aria-label="Enter augmented reality">
+            📱 Enter AR
+          </button>
+          <div class="xr-status" id="arStatus">Checking AR support…</div>
+
+          <button class="btn btn-vr" id="btnVR" aria-label="Enter virtual reality"
+                  style="margin-top:6px;">
+            🥽 Enter VR
+          </button>
+          <div class="xr-status" id="vrStatus">Checking VR support…</div>
+        </div>
+      </details>
+
+    </aside>
+
+    <!-- ───────── 3D VIEWER COLUMN ───────── -->
+    <section class="viewer-col" aria-label="3D brain viewer" id="viewerCol">
+
+      <!-- Empty state (shown before scan) -->
+      <div class="viewer-empty" id="viewerEmpty">
+        <span class="viewer-empty-icon" aria-hidden="true">🧠</span>
+        <h1 class="viewer-empty-title">NeuroVR 3D</h1>
+        <p class="viewer-empty-sub">Upload a volumetric MRI to begin tumor analysis.</p>
+        <span class="viewer-empty-formats">NIfTI &nbsp;·&nbsp; .nii &nbsp;/&nbsp; .nii.gz</span>
+      </div>
+
+      <!-- Three.js canvas -->
+      <canvas id="threeCanvas" aria-label="3D brain visualization"></canvas>
+
+      <!-- Gizmo canvas (orientation) -->
+      <canvas id="gizmoCanvas" aria-label="Anatomical orientation indicator"
+              title="Anatomical orientation: L=Left R=Right A=Anterior P=Posterior S=Superior I=Inferior"></canvas>
+
+      <!-- View badge overlay -->
+      <div class="viewer-badge" id="viewBadge" aria-live="polite">
+        <div class="viewer-badge-view" id="viewBadgeLabel">3D PERSPECTIVE</div>
+        <div class="viewer-badge-space">PATIENT SPACE</div>
+      </div>
+
+      <!-- Demo badge (shown when in demo mode) -->
+      <div class="demo-badge" id="demoBadge"
+           style="position:absolute;top:12px;left:50%;transform:translateX(-50%);display:none"
+           aria-label="Demo mode — sample data, not patient data">
+        DEMO — SAMPLE DATA
+      </div>
+
+      <!-- Tumor callout -->
+      <div id="tumorCallout" role="region" aria-label="Tumor location">
+        <div class="callout-box">
+          <div class="callout-title">Tumor</div>
+          <div class="callout-side" id="calloutSide">—</div>
+          <div class="callout-vol"  id="calloutVol">—</div>
+        </div>
+        <div class="callout-stem"></div>
+        <div class="callout-dot"></div>
+      </div>
+
+      <!-- Viewer toolbar -->
+      <div class="viewer-toolbar" role="toolbar" aria-label="Viewer controls">
+        <button class="toolbar-btn active" id="tbOrbit" data-tip="Orbit / Rotate"
+                aria-label="Orbit mode">⟲ Orbit</button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" id="tbFocus" data-tip="Focus on tumor"
+                aria-label="Focus on tumor">⊙ Focus</button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" id="tbReset" data-tip="Reset view"
+                aria-label="Reset camera">⟳ Reset</button>
+        <div class="toolbar-sep"></div>
+        <button class="toolbar-btn" id="tbSplit" data-tip="Toggle 2D/3D split view"
+                aria-label="Toggle split view">⊞ Split</button>
+      </div>
+
+    </section>
+
+    <!-- ───────── RIGHT ANALYSIS PANEL ───────── -->
+    <aside class="right-panel" aria-label="Analysis results">
+
+      <div class="panel-header">Analysis</div>
+
+      <!-- Detection badge -->
+      <div class="detection-badge" id="detectionBadge">
+        <span class="detection-icon" id="detectionIcon" aria-hidden="true">⬤</span>
+        <div>
+          <div class="detection-text waiting" id="detectionText">Awaiting scan</div>
+          <div class="detection-sub" id="detectionSub">Upload MRI to begin</div>
+        </div>
+      </div>
+
+      <!-- LOCATION -->
+      <div class="location-card" id="locationCard" style="display:none">
+        <div class="card-label">Location</div>
+        <div class="location-side" id="locSide">—</div>
+        <div class="location-lobe" id="locLobe"></div>
+        <div class="location-conf" id="locConf" style="display:none">
+          <span class="conf-label">Confidence</span>
+          <span class="conf-badge" id="locConfBadge">—</span>
+        </div>
+        <div class="location-est" id="locEst" style="display:none">
+          Estimated from MNI coordinates
+        </div>
+      </div>
+
+      <!-- TUMOR TYPE -->
+      <div class="type-card" id="typeCard">
+        <div class="card-label">Tumor Type</div>
+        <div class="type-pattern" id="typePattern">Awaiting analysis…</div>
+        <div class="type-subtype" id="typeSubtype" style="display:none"></div>
+        <div class="type-grade-row" id="typeGradeRow" style="display:none">
+          <span class="type-grade-lbl">WHO Grade</span>
+          <span class="type-grade-val" id="typeGrade">—</span>
+          <span class="type-conf" id="typeConf"></span>
+        </div>
+        <div class="type-basis" id="typeBasis" style="display:none"></div>
+        <div class="type-disclaimer" id="typeDisclaimer" style="display:none"></div>
+      </div>
+
+
+      <!-- MEASUREMENTS -->
+      <div class="meas-section" id="measSection" style="display:none">
+        <div class="card-label">Measurements</div>
+        <div class="meas-row">
+          <span class="meas-label">
+            <span class="meas-dot" style="background:var(--accent-cyan)"></span>Whole Tumor
+          </span>
+          <span class="meas-val"><span id="measWT">—</span><span class="meas-unit"> cm³</span></span>
+        </div>
+        <div class="meas-row">
+          <span class="meas-label">
+            <span class="meas-dot" style="background:var(--accent-red)"></span>Tumor Core
+          </span>
+          <span class="meas-val"><span id="measTC">—</span><span class="meas-unit"> cm³</span></span>
+        </div>
+        <div class="meas-row">
+          <span class="meas-label">
+            <span class="meas-dot" style="background:var(--accent-amber)"></span>Enhancing
+          </span>
+          <span class="meas-val"><span id="measET">—</span><span class="meas-unit"> cm³</span></span>
+        </div>
+      </div>
+
+      <!-- SPATIAL (collapsible) -->
+      <details class="spatial-section" id="spatialSection" style="display:none">
+        <summary>
+          <span>Spatial Information</span>
+          <span class="spatial-chevron">▾</span>
+        </summary>
+        <div class="spatial-body">
+          <div class="spatial-group-label">Centroid (RAS mm)</div>
+          <div class="coord-row">
+            <span class="coord-axis">X</span>
+            <span class="coord-val" id="coordX">—</span>
+            <span class="coord-unit">mm</span>
+          </div>
+          <div class="coord-row">
+            <span class="coord-axis">Y</span>
+            <span class="coord-val" id="coordY">—</span>
+            <span class="coord-unit">mm</span>
+          </div>
+          <div class="coord-row">
+            <span class="coord-axis">Z</span>
+            <span class="coord-val" id="coordZ">—</span>
+            <span class="coord-unit">mm</span>
+          </div>
+          <div class="spatial-group-label" style="margin-top:6px;">Voxel Spacing</div>
+          <div class="spacing-val" id="voxelSpacing">— mm</div>
+        </div>
+      </details>
+
+      <!-- VIEW STATUS -->
+      <div style="padding:10px 12px;border-bottom:1px solid var(--bg-border)">
+        <div class="card-label">Current View</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:3px" id="currentViewLabel">3D Perspective</div>
+      </div>
+
+      <!-- SEGMENTATION LEGEND -->
+      <div class="legend-section">
+        <div class="card-label">Segmentation</div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--accent-cyan)"></span>
+          Whole Tumor
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--accent-red)"></span>
+          Tumor Core
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--accent-amber)"></span>
+          Enhancing Tumor
+        </div>
+        <div class="legend-item">
+          <span class="legend-circle"></span>
+          Brain (approx. surface)
+        </div>
+      </div>
+
+      <!-- ANATOMICAL LEGEND -->
+      <div class="legend-section" style="display:none" id="regionLegend">
+        <div class="card-label">Anatomical Regions</div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--region-frontal)"></span>Frontal
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--region-parietal)"></span>Parietal
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--region-temporal)"></span>Temporal
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--region-occipital)"></span>Occipital
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--region-cerebellum)"></span>Cerebellum
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background:var(--region-brainstem)"></span>Brainstem
+        </div>
+      </div>
+
+      <!-- DISCLAIMER -->
+      <div class="disclaimer-section">
+        <strong>⚠ Research Prototype</strong><br/>
+        Not for clinical diagnosis. Consult a qualified radiologist.<br/>
+        Anatomical localization is AI/coordinate-estimated.
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- ═══════════════════════ STATUS BAR ════════════════════ -->
+  <footer class="status-bar" role="contentinfo" aria-label="System status">
+    <div class="sb-group">
+      <span class="sb-label">MRI</span>
+      <span class="sb-badge miss" id="sb-t1"   title="T1 modality">T1</span>
+      <span class="sb-badge miss" id="sb-t1ce" title="T1ce modality">T1c</span>
+      <span class="sb-badge miss" id="sb-t2"   title="T2 modality">T2</span>
+      <span class="sb-badge miss" id="sb-flair" title="FLAIR modality">FLAIR</span>
+    </div>
+    <div class="sb-group">
+      <span class="sb-label">Model</span>
+      <span class="sb-val">MONAI BraTS</span>
+    </div>
+    <div class="sb-group">
+      <span class="sb-label">Device</span>
+      <span class="sb-val" id="sb-device">—</span>
+    </div>
+    <div class="sb-group">
+      <span class="sb-label">Inference</span>
+      <span class="sb-val" id="sb-inference">—</span>
+    </div>
+    <div class="sb-group" style="margin-left:auto;border-right:none">
+      <span class="sb-val" style="color:var(--text-muted);font-size:9px;">
+        Research &amp; Educational Prototype — Not for Clinical Diagnosis
+      </span>
+    </div>
+  </footer>
+
+</div><!-- /app-shell -->
+
+<!-- Hidden file input for upload -->
+<input type="file" id="fileInputHidden" multiple accept=".nii,.nii.gz"
+       style="display:none" aria-hidden="true" />
+
+<!-- Scripts (ES modules) -->
+<script type="module" src="viewer.js"></script>
+<script type="module" src="ui.js"></script>
+</body>
+</html>

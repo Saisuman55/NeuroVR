@@ -1,338 +1,226 @@
----
-title: NeuroVR — BrainTumor AI
-emoji: 🧠
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "4.44.1"
-app_file: app.py
-pinned: true
-license: mit
-short_description: Brain MRI tumor classification & segmentation
----
+# NeuroVR 3D
+### AI-Powered 3D Brain MRI Segmentation · Anatomical Localization · AR/VR Visualization
 
-<div align="center">
-
-<img src="https://img.shields.io/badge/🧠-NeuroVR%20BrainTumor%20AI-0ea5e9?style=for-the-badge" alt="NeuroVR"/>
-
-# 🧠 NeuroVR — BrainTumor AI
-
-### Clinical-Grade MRI Tumor Classification & Segmentation
-
-[![🤗 Live Demo](https://img.shields.io/badge/🤗%20HuggingFace-Live%20Demo-ff9d00?style=for-the-badge&logo=huggingface&logoColor=white)](https://huggingface.co/spaces/swaggersamantaray55/NeuroVR)
-[![GitHub](https://img.shields.io/badge/GitHub-Saisuman55%2FNeuroVR-181717?style=for-the-badge&logo=github)](https://github.com/Saisuman55/NeuroVR)
-[![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
-[![ZeroGPU](https://img.shields.io/badge/ZeroGPU-A100%20Free-7c3aed?style=for-the-badge)](https://huggingface.co/docs/hub/spaces-zerogpu)
-
-<br/>
-
-> End-to-end deep learning pipeline for brain MRI **tumor classification** and **pixel-level segmentation** — served as a medical-grade AI interface on HuggingFace Spaces with ZeroGPU.
-
-<br/>
-
-**🔗 Try it live → [huggingface.co/spaces/swaggersamantaray55/NeuroVR](https://huggingface.co/spaces/swaggersamantaray55/NeuroVR)**
-
-</div>
+> **Research prototype — NOT for clinical use.**  
+> All measurements and anatomical estimates are for research and demonstration purposes only.
 
 ---
 
-## 🎯 What It Does
+## Overview
 
-Upload any brain MRI scan and get **instant AI analysis** in under 10 seconds:
+NeuroVR 3D is a full-stack medical imaging application that:
 
-| Step | Model | Output |
-|---|---|---|
-| **1. Classification** | EfficientNet-B4 | Tumor type + confidence + class probabilities |
-| **2. Segmentation** | U-Net + ResNet34 | Binary tumor mask + 5 visualization outputs |
-| **3. Cross-Check** | Logic layer | Validates classifier against segmentation mask |
-| **4. Report** | ReportLab PDF | Downloadable clinical-style report with all results |
-
----
-
-## ✨ Features
-
-| Feature | Details |
-|---|---|
-| **4-Class Classification** | Glioma · Meningioma · Pituitary · No Tumor |
-| **Pixel-Level Segmentation** | U-Net + ResNet34 binary tumor mask |
-| **Cross-Check Validation** | Segmentation corrects classifier false negatives |
-| **5-Panel Output Gallery** | Original · Binary Mask · Green Overlay · Contour · Heatmap |
-| **Confidence Bar Chart** | Per-class probability visualization |
-| **PDF Clinical Report** | Patient info, diagnosis, all outputs — one-click download |
-| **ZeroGPU Powered** | Free A100 GPU inference on HuggingFace |
-| **Medical-Grade UI** | Dark radiology theme, risk badges, analysis IDs |
+1. **Accepts** multi-modal NIfTI MRI (T1, T1ce, T2, FLAIR) or DICOM series
+2. **Segments** brain tumors in 3D using the pretrained MONAI BraTS model
+3. **Reconstructs** volumetric tumor meshes (GLB) via Marching Cubes
+4. **Measures** tumor volumes and spatial extents in physical units (cm³ / mm)
+5. **Localizes** tumors anatomically (LEFT/RIGHT hemisphere, estimated lobe)
+6. **Visualizes** everything in an interactive Three.js 3D viewer
+7. **Supports** WebXR AR and VR immersive viewing
 
 ---
 
-## 🏗️ System Architecture
+## Pipeline
 
 ```
-MRI Image Upload (Gradio UI)
-        │
-        ▼
- EfficientNet-B4 ──► Class + Confidence + All Class Probabilities
-        │
-        ├─── notumor? ──► Segmentation Cross-Check
-        │
-        ▼
- U-Net + ResNet34 ──► Binary Tumor Mask
-        │
-        ├── > 50 tumor pixels? ──► Override classifier → tumor confirmed
-        │
-        ▼
-  5 Output Images
-  ├── original.png
-  ├── binary_mask.png
-  ├── green_overlay.png
-  ├── contour.png
-  └── heatmap.png
-        │
-        ▼
-  Gradio UI Result Card + PDF Report
+NIfTI / DICOM input
+        ↓
+  Volume preprocessing
+  (resample → 1 mm³, z-score normalize, crop foreground)
+        ↓
+  MONAI BraTS 3D segmentation
+  (sliding-window inference → TC / WT / ET masks)
+        ↓
+  Mask post-processing
+  (connected-component filter, morphological closing)
+        ↓
+  3D mesh reconstruction
+  (Marching Cubes → Laplacian smoothing → GLB export)
+        ↓
+  Physical measurements
+  (volume cm³, bounding box mm, centroid RAS mm)
+        ↓
+  Anatomical localization
+  (NIfTI affine → RAS centroid → LEFT/RIGHT/MIDLINE + estimated lobe)
+        ↓
+  Three.js 3D viewer + WebXR AR/VR
 ```
 
 ---
 
-## 🚀 Live Demo
+## Quick Start
 
-**→ [huggingface.co/spaces/swaggersamantaray55/NeuroVR](https://huggingface.co/spaces/swaggersamantaray55/NeuroVR)**
-
-Or embed directly in any website:
-
-```html
-<iframe
-  src="https://swaggersamantaray55-neurovr.hf.space"
-  width="100%"
-  height="900"
-  frameborder="0"
-  allow="camera;microphone"
-  style="border-radius:12px;box-shadow:0 4px 32px rgba(0,0,0,.4)"
-></iframe>
-```
-
----
-
-## 📁 Project Structure
-
-```
-brain_tumor_project/
-│
-├── src/
-│   ├── model.py              # EfficientNet-B4 classifier + U-Net segmenter
-│   ├── data_loader.py        # Dataset classes, augmentations, seed utils
-│   ├── train_m5_optimized.py # Two-phase training (frozen → fine-tune)
-│   ├── inference.py          # Classify → segment → save 5 output images
-│   └── evaluate.py           # Confusion matrix, Dice, IoU, CSV reports
-│
-├── stitch_frontend/          # Local web dashboard (HTML/CSS/JS)
-│   ├── index.html            # Home — pipeline overview + 3D brain
-│   ├── inference.html        # Upload MRI, view results, export PDF
-│   ├── training_status.html  # Live training charts
-│   ├── about.html            # Model details & architecture
-│   └── metrics.json          # Written by monitor.py during training
-│
-├── models/                   # Auto-downloaded from HF Hub at runtime
-│   ├── classifier/           # brain_tumor_classifier_best.pth (~71 MB)
-│   └── segmenter/            # brain_tumor_segmenter_best.pth (~98 MB)
-│
-├── app.py                    # Gradio app — HF Spaces entry point
-├── download_models.py        # Auto-downloads weights from HF Hub on startup
-├── monitor.py                # Parses training logs → updates metrics.json
-├── config.yaml               # All hyperparameters and file paths
-├── requirements.txt          # Python dependencies
-└── README.md
-```
-
----
-
-## ⚙️ Local Setup
-
-### Requirements
-
-- Python **3.9 – 3.12**
-- macOS (Apple MPS) **or** Linux/Windows with CUDA GPU
-- ~4 GB RAM minimum; 8+ GB recommended for training
-
-### 1. Clone
-
-```bash
-git clone https://github.com/Saisuman55/NeuroVR.git
-cd NeuroVR
-```
-
-### 2. Install dependencies
+### 1. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Download datasets
-
-| Task | Dataset | Kaggle Link | Place at |
-|---|---|---|---|
-| Classification | Brain Tumor MRI Dataset | [Link](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset) | `data/classification/` |
-| Segmentation | LGG MRI Segmentation | [Link](https://www.kaggle.com/datasets/mateuszbuda/lgg-mri-segmentation) | `data/segmentation/` |
-
-### 4. Model Weights
-
-Weights (~170 MB total) are automatically downloaded from HuggingFace Hub when running on Spaces.
-
-For local use, either:
-- Set `HF_MODEL_REPO=swaggersamantaray55/brain-tumor-ai-weights` and run `python download_models.py`
-- Or place them manually:
-  ```
-  models/classifier/brain_tumor_classifier_best.pth
-  models/segmenter/brain_tumor_segmenter_best.pth
-  ```
-
-### 5. Run locally
+### 2. Verify the MONAI model is present
 
 ```bash
-python app.py
+ls models/monai/brats_mri_segmentation/models/model.pt
+# If missing:
+python3 scripts/download_bundle.py
 ```
 
-Opens at **[http://localhost:7860](http://localhost:7860)**
-
----
-
-## 🏋️ Training
-
-Training runs in two phases automatically:
-
-1. **Phase 1 — Frozen backbone**: Only the classification head is trained
-2. **Phase 2 — Fine-tuning**: Top EfficientNet layers unfrozen at lower LR
+### 3. Start the server
 
 ```bash
-# Terminal 1 — start training
-python src/train_m5_optimized.py 2>&1 | tee outputs/training_log.txt
+DISABLE_MPS=1 PYTORCH_ENABLE_MPS_FALLBACK=1 python3 flask_app_3d.py
+```
 
-# Terminal 2 — live monitor (updates metrics.json for dashboard)
-python monitor.py
+Open **[http://localhost:7861](http://localhost:7861)**
+
+### 4. Demo mode
+
+Click **⚗ Demo Mode** in the UI to run the full pipeline on the bundled real MRI scan (MNI152 standard brain).
+
+---
+
+## Project Structure
+
+```
+brain_tumor_project/
+│
+├── flask_app_3d.py          ← Main application (port 7861)
+├── config.yaml              ← Pipeline configuration
+├── requirements.txt         ← Python dependencies
+├── .env.example             ← Environment variable template
+│
+├── preprocessing/           ← NIfTI/DICOM loading + volume preprocessing
+│   ├── nifti_loader.py
+│   ├── dicom_loader.py
+│   └── volume_preprocessor.py
+│
+├── inference/               ← MONAI 3D segmentation + anatomical localization
+│   ├── model_loader_3d.py
+│   ├── segmentation_3d.py
+│   ├── segmentation_numpy.py   ← CPU fallback (no MONAI required for demo)
+│   └── localization.py
+│
+├── reconstruction/          ← Mesh generation + measurements
+│   ├── mask_processing.py
+│   ├── tumor_mesh.py
+│   └── measurements.py
+│
+├── frontend/                ← Three.js medical imaging workstation UI
+│   ├── index.html
+│   ├── style.css
+│   ├── viewer.js
+│   └── ui.js
+│
+├── scripts/
+│   └── download_bundle.py   ← Download MONAI BraTS model bundle
+│
+├── models/
+│   ├── README.md
+│   └── monai/brats_mri_segmentation/   ← Pretrained model
+│
+├── data/
+│   └── real_brats/          ← Real MNI152 MRI (demo data, ~3.4 MB)
+│
+├── demo_data/
+│   └── generate_demo.py     ← Synthetic BraTS case generator
+│
+├── tests/
+│   ├── smoke_test.py        ← End-to-end pipeline test (no MONAI required)
+│   └── test_pipeline.py
+│
+├── outputs/                 ← Runtime session data (generated, not committed)
+│   └── .gitkeep
+│
+└── archive/
+    └── legacy_2d/           ← Old 2D EfficientNet/U-Net pipeline (reference only)
 ```
 
 ---
 
-## 🔬 Inference (CLI)
+## API Endpoints
 
-```bash
-python src/inference.py --image test_samples/glioma_Te-gl_1.jpg
-```
-
-Saves 5 images to `outputs/predictions/` and prints:
-
-```
-Predicted class: GLIOMA (confidence: 0.9472)
-Probabilities: [0.9472, 0.0312, 0.0189, 0.0027]
-Classes: ['glioma', 'meningioma', 'pituitary', 'notumor']
-```
-
----
-
-## 📊 Evaluation
-
-```bash
-python src/evaluate.py --task both
-python src/evaluate.py --task classification
-python src/evaluate.py --task segmentation --num_visualize 10
-```
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/api/upload` | Upload NIfTI files (multipart/form-data) |
+| `POST` | `/api/analyze/<sid>` | Start 3D AI segmentation pipeline |
+| `GET` | `/api/status/<sid>` | Poll pipeline progress |
+| `GET` | `/api/results/<sid>` | Tumor measurements JSON |
+| `GET` | `/api/mesh/<sid>/<type>` | Download GLB mesh (brain/tumor_whole/tumor_core/tumor_enhancing) |
+| `GET` | `/api/localization/<sid>` | Anatomical localization result |
+| `GET` | `/api/slice/<sid>/<plane>/<idx>` | 2D MRI slice PNG (axial/coronal/sagittal) |
+| `GET` | `/api/slice_info/<sid>` | Slice dimension info |
+| `GET` | `/api/demo` | Run demo with real MNI152 MRI |
+| `GET` | `/api/health` | System status |
 
 ---
 
-## 📈 Results
+## Model
 
-| Model | Task | Metric | Value |
-|---|---|---|---|
-| EfficientNet-B4 | 4-class classification | Accuracy | >98% |
-| U-Net + ResNet34 | Binary segmentation | Dice Coefficient | >0.80 |
-
-**Loss functions:**
-- Classifier: Cross-Entropy + Label Smoothing (0.1)
-- Segmenter: BCE + Dice combined loss (50/50)
+**MONAI BraTS MRI Segmentation**  
+Source: [MONAI Model Zoo](https://monai.io/model-zoo.html)  
+Architecture: SegResNet  
+Input: 4-channel NIfTI [T1, T1ce, T2, FLAIR]  
+Output: 3-class segmentation [Tumor Core, Whole Tumor, Enhancing Tumor]  
+License: Apache 2.0
 
 ---
 
-## 🧪 Test Samples
+## Anatomical Localization
 
-12 real MRI images included in `test_samples/` — 3 per class:
+Tumor location is derived from:
+1. **NIfTI affine matrix** → converts voxel centroid to RAS world coordinates (mm)
+2. **RAS X-coordinate** → LEFT (X < 0) / RIGHT (X > 0) / MIDLINE (|X| < 8 mm)
+3. **MNI152 bounding boxes** → estimated lobe (Frontal/Parietal/Temporal/Occipital/Cerebellum/Brainstem)
 
-```
-glioma_Te-gl_1.jpg        glioma_Te-gl_10.jpg        glioma_Te-gl_100.jpg
-meningioma_Te-aug-me_1.jpg meningioma_Te-aug-me_10.jpg meningioma_Te-aug-me_100.jpg
-notumor_Te-no_1.jpg        notumor_Te-no_10.jpg        notumor_Te-no_100.jpg
-pituitary_Te-pi_1.jpg      pituitary_Te-pi_10.jpg      pituitary_Te-pi_100.jpg
-```
+> **Disclaimer:** Localization is coordinate-estimated — not atlas-registered.  
+> It is NOT a clinical diagnosis. Consult a qualified radiologist.
 
 ---
 
-## 📦 Tech Stack
+## Supported Input Formats
 
-| Layer | Technology |
+| Format | Modalities |
 |---|---|
-| **Classification** | EfficientNet-B4 (`timm`) |
-| **Segmentation** | U-Net + ResNet34 (`segmentation-models-pytorch`) |
-| **Augmentation** | `albumentations` |
-| **AI Interface** | `Gradio 4.44` on HuggingFace Spaces |
-| **GPU** | ZeroGPU (free A100 via `spaces.GPU`) |
-| **Model Hub** | HuggingFace Hub (`huggingface_hub`) |
-| **PDF Reports** | `reportlab` |
-| **Local Frontend** | HTML5 · Tailwind CSS · Vanilla JS · Three.js |
-| **Hardware** | Apple MPS · NVIDIA CUDA · CPU fallback |
+| `.nii`, `.nii.gz` | T1, T1ce, T2, FLAIR (one file per modality) |
+| `.dcm` (DICOM) | Any MRI series |
+
+Expected modality naming: files containing `t1`, `t1ce`/`t1c`, `t2`, `flair` in their filename are auto-detected.
 
 ---
 
-## 🔧 Configuration (`config.yaml`)
+## AR / VR
 
-```yaml
-seed: 42
+WebXR is supported via Three.js `XRButton`:
+- **AR** — Places the 3D tumor model in your physical space (requires ARCore/ARKit device)
+- **VR** — Full immersive viewing (requires VR headset or compatible browser)
 
-paths:
-  model_classifier:  models/classifier/brain_tumor_classifier.pth
-  model_segmenter:   models/segmenter/brain_tumor_segmenter.pth
-  outputs:           outputs
+Both require HTTPS in production. Localhost works without HTTPS in Chrome.
 
-classification:
-  model_name:    efficientnet_b4
-  img_size:      380
-  num_classes:   4
-  class_names:   [glioma, meningioma, notumor, pituitary]
-  dropout:       0.2
+---
 
-segmentation:
-  encoder:       resnet34
-  img_size:      128
-  classes:       1
-  activation:    sigmoid
+## Tests
+
+```bash
+# End-to-end pipeline smoke test (no MONAI model required)
+python3 tests/smoke_test.py
+
+# Full pipeline test (requires MONAI + model)
+python3 tests/test_pipeline.py
 ```
 
 ---
 
-## 📄 License
+## Privacy
 
-MIT License — **educational and research purposes only**.  
-Not intended or approved for clinical diagnosis.
-
-Datasets subject to their respective Kaggle licenses.
-
----
-
-## 📚 References
-
-**[1] EfficientNet** — Tan & Le, ICML 2019. https://arxiv.org/abs/1905.11946  
-**[2] U-Net** — Ronneberger et al., MICCAI 2015. https://arxiv.org/abs/1505.04597  
-**[3] ResNet** — He et al., CVPR 2016. https://arxiv.org/abs/1512.03385  
-**[4] Dice Loss** — Milletari et al., 3DV 2016. https://arxiv.org/abs/1606.04797  
-**[5] Albumentations** — Buslaev et al., 2020. https://arxiv.org/abs/1809.06839  
-**[6] LGG MRI Dataset** — Buda et al., 2019. https://doi.org/10.1016/j.compbiomed.2019.05.002  
-**[7] Brain Tumor MRI Dataset** — Nickparvar, Kaggle 2021.
+- Uploaded MRI files are stored temporarily in `outputs/<session_id>/uploads/`
+- Session data is cleared on server restart
+- No patient data is committed to this repository
+- Never upload real patient data to a development server
 
 ---
 
-<div align="center">
+## License
 
-**Built with ❤️ · Powered by PyTorch + HuggingFace ZeroGPU**
-
-[![🤗 Live Demo](https://img.shields.io/badge/🤗%20Try%20Live%20Demo-NeuroVR-ff9d00?style=for-the-badge&logo=huggingface)](https://huggingface.co/spaces/swaggersamantaray55/NeuroVR)
-
-</div>
+Research prototype. See individual component licenses:
+- MONAI model: Apache 2.0
+- Three.js: MIT
+- Application code: MIT
