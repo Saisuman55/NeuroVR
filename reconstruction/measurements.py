@@ -173,6 +173,9 @@ def compute_all_measurements(
 
     tumor_detected = wt_meas["detected"]
 
+    et_outside_tc = int(np.count_nonzero(et_mask.astype(bool) & ~tc_mask.astype(bool)))
+    tc_outside_wt = int(np.count_nonzero(tc_mask.astype(bool) & ~wt_mask.astype(bool)))
+
     return {
         "disclaimer": (
             "AI-derived research measurements from automated segmentation. "
@@ -182,6 +185,13 @@ def compute_all_measurements(
         "model": model_name,
         "voxel_spacing_mm": [round(float(v), 4) for v in voxel_spacing],
         "inference_time_s": round(inference_time_s, 2),
+        "spatial_validation": {
+            "enhancing_inside_core": et_outside_tc == 0,
+            "core_inside_whole": tc_outside_wt == 0,
+            "enhancing_outside_core_voxels": et_outside_tc,
+            "core_outside_whole_voxels": tc_outside_wt,
+            "shared_voxel_grid": tc_mask.shape == wt_mask.shape == et_mask.shape,
+        },
         "regions": {
             "whole_tumor": wt_meas,
             "tumor_core": tc_meas,

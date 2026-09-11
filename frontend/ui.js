@@ -23,6 +23,7 @@ let sliceInfo        = null;
 let currentPlane     = 'axial';
 let currentSliceIdx  = 0;
 let pendingModalities= {};  // { t1: File, t1ce: File, ... }
+let pollFailureCount = 0;
 
 // Visibility state
 const visibility = {
@@ -53,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   _bindViewPresets();
   _bindSectionButtons();
   _bindToggleRows();
+  _bindVisualizationModes();
   _bindRegionButtons();
   _checkSystemStatus();
   _initSliceViewer();
@@ -72,6 +74,65 @@ async function _checkSystemStatus() {
     setText('systemStatusText', 'OFFLINE');
     const dot = $('systemDot');
     if (dot) { dot.style.background = 'var(--accent-red)'; }
+  }
+}
+
+function _setVisibility(name, visible) {
+  visibility[name] = visible;
+  const dot = $(`dot-${name}`);
+  const lbl = $(`lbl-${name}`);
+  const badge = $(`vis-${name}`);
+  if (dot) dot.classList.toggle('off', !visible);
+  if (lbl) lbl.classList.toggle('off', !visible);
+  if (badge) badge.textContent = visible ? 'ON' : 'OFF';
+  getViewer()?.setVisible(name, visible);
+}
+
+function _bindVisualizationModes() {
+  document.querySelectorAll('[data-mode]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('[data-mode]').forEach(item => {
+        item.classList.remove('active');
+        item.setAttribute('aria-pressed', 'false');
+      });
+      button.classList.add('active');
+      button.setAttribute('aria-pressed', 'true');
+      _applyVisualizationMode(button.dataset.mode);
+    });
+  });
+}
+
+function _applyVisualizationMode(mode) {
+  const presets = {
+    anatomical:  { brain: 100, tumor: 0,   tumorsVisible: false },
+    transparent: { brain: 35,  tumor: 75,  tumorsVisible: true },
+    tumor:       { brain: 22,  tumor: 92,  tumorsVisible: true },
+    mri3d:       { brain: 35,  tumor: 92,  tumorsVisible: true },
+  };
+  const preset = presets[mode];
+  if (!preset) return;
+
+  const brainSlider = $('brainOpacity');
+  const tumorSlider = $('tumorOpacity');
+  if (brainSlider) {
+    brainSlider.value = preset.brain;
+    brainSlider.setAttribute('value', String(preset.brain));
+  }
+  if (tumorSlider) {
+    tumorSlider.value = preset.tumor;
+    tumorSlider.setAttribute('value', String(preset.tumor));
+  }
+  window.ui.setBrainOpacity(preset.brain);
+  window.ui.setTumorOpacity(preset.tumor);
+  _setVisibility('brain', true);
+  ['tumor_whole', 'tumor_core', 'tumor_enhancing'].forEach(name => {
+    _setVisibility(name, preset.tumorsVisible);
+  });
+
+  if (mode === 'mri3d') {
+    if (!splitActive) window.ui.toggleSplitView();
+  } else if (splitActive) {
+    window.ui.toggleSplitView();
   }
 }
 
@@ -200,6 +261,45 @@ function _bindButtons() {
   if (tbReset) tbReset.addEventListener('click', () => window.ui.resetView());
   const tbSplit = $('tbSplit');
   if (tbSplit) tbSplit.addEventListener('click', () => window.ui.toggleSplitView());
+  const tbOrbit = $('tbOrbit');
+  if (tbOrbit) {
+    tbOrbit.setAttribute('aria-pressed', 'true');
+    tbOrbit.addEventListener('click', () => {
+      const enabled = getViewer()?.toggleOrbit();
+      if (enabled == null) return;
+      tbOrbit.classList.toggle('active', enabled);
+      tbOrbit.setAttribute('aria-pressed', String(enabled));
+      tbOrbit.setAttribute('data-tip', enabled ? 'Orbit / Rotate enabled' : 'Orbit / Rotate paused');
+      if (!enabled) {
+        getViewer()?.setAutoRotate(false);
+        const autoRotate = $('btnAutoRotate');
+        if (autoRotate) {
+          autoRotate.classList.remove('active');
+          autoRotate.setAttribute('aria-pressed', 'false');
+          autoRotate.textContent = '⟳ Auto Rotate: Off';
+        }
+      }
+    });
+  }
+  const btnAutoRotate = $('btnAutoRotate');
+  if (btnAutoRotate) {
+    btnAutoRotate.addEventListener('click', () => {
+      const active = btnAutoRotate.getAttribute('aria-pressed') !== 'true';
+      const enabled = getViewer()?.setAutoRotate(active);
+      if (enabled == null) return;
+      btnAutoRotate.classList.toggle('active', enabled);
+      btnAutoRotate.setAttribute('aria-pressed', String(enabled));
+      btnAutoRotate.textContent = enabled ? '⟳ Auto Rotate: On' : '⟳ Auto Rotate: Off';
+      if (enabled) {
+        const orbit = $('tbOrbit');
+        if (orbit) {
+          orbit.classList.add('active');
+          orbit.setAttribute('aria-pressed', 'true');
+          orbit.setAttribute('data-tip', 'Orbit / Rotate enabled');
+        }
+      }
+    });
+  }
 }
 
 // ─── View presets ─────────────────────────────────────────────────────────────
@@ -328,17 +428,7 @@ function _bindToggleRows() {
 }
 
 function _handleToggle(name) {
-  visibility[name] = !visibility[name];
-  const vis  = visibility[name];
-  const dot  = $(`dot-${name}`);
-  const lbl  = $(`lbl-${name}`);
-  const badge = $(`vis-${name}`);
-
-  if (dot)  dot.classList.toggle('off',  !vis);
-  if (lbl)  lbl.classList.toggle('off',  !vis);
-  if (badge) badge.textContent = vis ? 'ON' : 'OFF';
-
-  getViewer()?.setVisible(name, vis);
+  _setVisibility(name, !visibility[name]);
 }
 
 // ─── Region buttons + Anatomy card ───────────────────────────────────────────
@@ -521,6 +611,7 @@ async function _runDemo() {
 // ─── Polling ──────────────────────────────────────────────────────────────────
 function _startPolling() {
   if (pollInterval) clearInterval(pollInterval);
+  pollFailureCount = 0;
   pollInterval = setInterval(_poll, 1500);
 }
 
@@ -528,7 +619,9 @@ async function _poll() {
   if (!currentSessionId) return;
   try {
     const r = await fetch(`/api/status/${currentSessionId}`);
+    if (!r.ok) throw new Error(`Status request failed (${r.status})`);
     const d = await r.json();
+    pollFailureCount = 0;
 
     _updatePipelineSteps(d.progress ?? 0, d.message ?? '');
 
@@ -543,7 +636,19 @@ async function _poll() {
       _setProcessingState(false);
       _showAnalysisError(d.error ?? 'Unknown pipeline error.');
     }
-  } catch { /* network blip */ }
+  } catch (err) {
+    pollFailureCount += 1;
+    if (pollFailureCount >= 3) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+      _setProcessingState(false);
+      _showAnalysisError('Backend connection lost. Check that the NeuroVR server is running, then try again.');
+      const dot = $('systemDot');
+      if (dot) dot.className = 'status-dot error';
+      setText('systemStatusText', 'OFFLINE');
+      console.error('[UI] Analysis status polling failed:', err);
+    }
+  }
 }
 
 function _updatePipelineSteps(progress, message) {
@@ -603,6 +708,12 @@ async function _onAnalysisComplete(statusData) {
   }
   if (!loaded) {
     console.error('[UI] viewer.loadSession unavailable after retries');
+  } else {
+    document.querySelectorAll('[data-mode]').forEach(button => { button.disabled = false; });
+    const autoRotate = $('btnAutoRotate');
+    if (autoRotate) autoRotate.disabled = false;
+    const activeMode = document.querySelector('[data-mode].active')?.dataset.mode ?? 'tumor';
+    _applyVisualizationMode(activeMode);
   }
 
   // Fetch measurements

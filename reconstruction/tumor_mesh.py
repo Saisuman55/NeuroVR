@@ -31,6 +31,7 @@ def _check_dependencies() -> None:
 def mask_to_mesh(
     mask: np.ndarray,
     voxel_spacing: np.ndarray,
+    affine: Optional[np.ndarray] = None,
     level: float = 0.5,
     smoothing_iterations: int = 3,
     step_size: int = 1,
@@ -72,11 +73,24 @@ def mask_to_mesh(
     # Adjust for padding offset
     verts -= 1.0
 
-    # Apply physical voxel spacing (mm)
-    verts *= voxel_spacing  # Scale each axis by its voxel size
-
-    # Convert mm → meters for Three.js (Three.js units = meters)
-    verts /= 1000.0
+    if affine is not None:
+        # Marching-cubes vertices are voxel coordinates. Apply the NIfTI affine
+        # once so every surface uses the same RAS patient coordinate system.
+        affine_arr = np.asarray(affine, dtype=np.float64)
+        linear = affine_arr[:3, :3]
+        # Use an explicit broadcasted product here. It is deterministic for the
+        # relatively small vertex arrays and avoids platform BLAS warnings seen
+        # when mesh extraction runs concurrently in the Flask worker.
+        ras_mm = np.sum(
+            verts[:, np.newaxis, :].astype(np.float64) * linear[np.newaxis, :, :],
+            axis=2,
+        ) + affine_arr[np.newaxis, :3, 3]
+        # Three.js: X=R, Y=S, -Z=A. This matches the viewer orientation gizmo.
+        verts = np.column_stack((ras_mm[:, 0], ras_mm[:, 2], -ras_mm[:, 1])) / 1000.0
+    else:
+        # Backward-compatible voxel-axis physical coordinates.
+        verts *= voxel_spacing
+        verts /= 1000.0
 
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, vertex_normals=normals)
 
@@ -122,6 +136,7 @@ def generate_tumor_meshes(
     voxel_spacing: np.ndarray,
     output_dir: str,
     smoothing_iterations: int = 3,
+    affine: Optional[np.ndarray] = None,
 ) -> Dict[str, str]:
     """Generate GLB meshes for all three tumor regions.
 
@@ -152,6 +167,7 @@ def generate_tumor_meshes(
         mesh = mask_to_mesh(
             mask,
             voxel_spacing=voxel_spacing,
+            affine=affine,
             smoothing_iterations=smoothing_iterations,
         )
 
@@ -172,6 +188,7 @@ def generate_brain_surface(
     threshold_percentile: float = 15.0,  # kept for backward compat, unused now
     smoothing_iterations: int = 2,        # 2 passes — preserves gyri/sulci folds
     step_size: int = 1,                   # full resolution — captures cortical detail
+    affine: Optional[np.ndarray] = None,
 ) -> Optional[str]:
     """Generate an anatomically realistic brain surface mesh from a T1 MRI volume.
 
@@ -265,6 +282,7 @@ def generate_brain_surface(
     mesh = mask_to_mesh(
         brain_mask,
         voxel_spacing=voxel_spacing,
+        affine=affine,
         level=0.5,
         smoothing_iterations=smoothing_iterations,
         step_size=step_size,

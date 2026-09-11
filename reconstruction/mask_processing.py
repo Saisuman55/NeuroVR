@@ -104,6 +104,13 @@ def postprocess_masks(
     Returns:
         Tuple of (tc_clean, wt_clean, et_clean) — all binary uint8 arrays.
     """
+    shapes = {tc_mask.shape, wt_mask.shape, et_mask.shape}
+    if len(shapes) != 1:
+        raise ValueError(
+            "TC, WT, and ET masks must use the same voxel grid; "
+            f"got TC={tc_mask.shape}, WT={wt_mask.shape}, ET={et_mask.shape}"
+        )
+
     results = []
     for name, mask in [("TC", tc_mask), ("WT", wt_mask), ("ET", et_mask)]:
         if mask.sum() == 0:
@@ -120,4 +127,12 @@ def postprocess_masks(
         print(f"[MaskProcessing] {name}: {int(mask.sum())} voxels, {n_components} components kept")
         results.append(mask)
 
-    return tuple(results)  # type: ignore[return-value]
+    tc_clean, wt_clean, et_clean = results
+
+    # BraTS regions describe one tumor and must remain mathematically nested.
+    # Independent closing/component filtering can otherwise remove boundary
+    # voxels from an outer layer while retaining them in an inner layer.
+    tc_clean = np.logical_or(tc_clean, et_clean).astype(np.uint8)
+    wt_clean = np.logical_or(wt_clean, tc_clean).astype(np.uint8)
+
+    return tc_clean, wt_clean, et_clean

@@ -526,6 +526,43 @@ html, body {
 }
 .toggle-dot.off { opacity: 0.25; }
 
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.btn-mode {
+  min-height: 32px;
+  padding: 5px 7px;
+  border: 1px solid var(--bg-border2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font: 500 10px/1.2 var(--font-body);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.btn-mode:hover { color: var(--text-primary); border-color: var(--accent-blue); }
+.btn-mode:disabled { opacity: 0.42; cursor: not-allowed; }
+.btn-mode.active {
+  color: var(--text-primary);
+  background: rgba(59, 130, 246, 0.16);
+  border-color: var(--accent-blue);
+}
+
+.btn-auto-rotate {
+  margin-bottom: 10px;
+}
+
+.btn-auto-rotate.active {
+  color: var(--text-primary);
+  border-color: var(--accent-cyan);
+  background: rgba(14, 165, 233, 0.13);
+}
+
 .toggle-label {
   flex: 1;
   font-size: 12px;

@@ -30,6 +30,13 @@ outputs/
 # Exception: small legally-distributable demo files in data/real_brats/
 !data/real_brats/*.nii.gz
 
+# ── Training datasets and large archives ─────────────────────────────────────
+data/training/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
 # ── Secrets ───────────────────────────────────────────────────────────────────
 .env
 .env.local

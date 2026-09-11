@@ -36,6 +36,7 @@ tqdm>=4.65.0                  # Progress bars during model download
 
 # ── Image I/O (2D slice PNG export for split-view) ───────────────────────────
 Pillow>=10.0.0
+h5py>=3.8.0                  # Cheng CE-MRI MATLAB/HDF5 training dataset
 
 # ── Visualization (2D slice rendering fallback) ───────────────────────────────
 matplotlib>=3.7.0

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NeuroVR 3D — Brain Tumor Analysis</title>
   <meta name="description" content="NeuroVR 3D: AI-powered volumetric MRI brain tumor segmentation, anatomical localization, and AR/VR visualization. Research prototype — not for clinical use." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css" />
 
   <!-- Three.js importmap — resolves bare 'three' specifiers to CDN without a bundler -->
@@ -244,6 +245,19 @@
         </summary>
         <div class="ctrl-section-body">
 
+          <div class="ctrl-label">Display Mode</div>
+          <div class="mode-grid" role="group" aria-label="Medical visualization mode">
+            <button class="btn-mode" data-mode="anatomical" aria-pressed="false" disabled>Anatomical</button>
+            <button class="btn-mode" data-mode="transparent" aria-pressed="false" disabled>Transparent</button>
+            <button class="btn-mode active" data-mode="tumor" aria-pressed="true" disabled>Tumor Analysis</button>
+            <button class="btn-mode" data-mode="mri3d" aria-pressed="false" disabled>MRI + 3D</button>
+          </div>
+          <button class="btn btn-secondary btn-auto-rotate" id="btnAutoRotate"
+                  aria-label="Toggle automatic 3D brain rotation"
+                  aria-pressed="false" disabled>
+            ⟳ Auto Rotate: Off
+          </button>
+
           <!-- Visibility toggles -->
           <div class="ctrl-label">Visibility</div>
 
@@ -254,7 +268,7 @@
                   data-toggle="brain"></span>
             <span class="toggle-label" id="lbl-brain" data-toggle="brain"
                   style="cursor:pointer">Brain</span>
-            <span style="margin-left:auto;font-size:10px;color:var(--accent-green);font-weight:600">ON</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--accent-green);font-weight:600" id="vis-brain">ON</span>
           </div>
 
           <div class="toggle-row">
@@ -318,7 +332,7 @@
             <button class="btn-view"        id="sectionCor"   data-section="coronal">COR</button>
             <button class="btn-view"        id="sectionSag"   data-section="sagittal">SAG</button>
           </div>
-          <div class="slider-row" id="clipRow" style="margin-top:4px;">
+          <div class="slider-row" id="clipRow" style="margin-top:4px;display:none;">
             <div class="slider-header">
               <span class="slider-name">Clip position</span>
               <span class="slider-val" id="valClip">50%</span>
@@ -397,8 +411,8 @@
 
       <!-- Viewer toolbar -->
       <div class="viewer-toolbar" role="toolbar" aria-label="Viewer controls">
-        <button class="toolbar-btn active" id="tbOrbit" data-tip="Orbit / Rotate"
-                aria-label="Orbit mode">⟲ Orbit</button>
+        <button class="toolbar-btn active" id="tbOrbit" data-tip="Orbit / Rotate enabled"
+                aria-label="Toggle orbit controls" aria-pressed="true">⟲ Orbit</button>
         <div class="toolbar-sep"></div>
         <button class="toolbar-btn" id="tbFocus" data-tip="Focus on tumor"
                 aria-label="Focus on tumor">⊙ Focus</button>
@@ -442,7 +456,7 @@
 
       <!-- TUMOR TYPE -->
       <div class="type-card" id="typeCard">
-        <div class="card-label">Tumor Type</div>
+        <div class="card-label">Tumor Classification</div>
         <div class="type-pattern" id="typePattern">Awaiting analysis…</div>
         <div class="type-subtype" id="typeSubtype" style="display:none"></div>
         <div class="type-grade-row" id="typeGradeRow" style="display:none">

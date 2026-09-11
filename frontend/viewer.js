@@ -176,6 +176,8 @@ class NeuroVRViewer {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.06;
+    this.controls.autoRotate     = false;
+    this.controls.autoRotateSpeed = 1.25;
     this.controls.minDistance   = 0.04;
     this.controls.maxDistance   = 2.0;
 
@@ -273,13 +275,11 @@ class NeuroVRViewer {
       this._centroidMarker = null;
     }
 
-    const boundsCenter = this._brainBounds.getCenter(new THREE.Vector3());
-    const boundsSize   = this._brainBounds.getSize(new THREE.Vector3());
-    const sceneScale   = boundsSize.length() / 200;
-
-    const x = boundsCenter.x + rx * sceneScale * 0.01;
-    const y = boundsCenter.y + rz * sceneScale * 0.01;
-    const z = boundsCenter.z - ry * sceneScale * 0.01;
+    // Mesh vertices use the same NIfTI affine and RAS-to-Three mapping:
+    // Three X=RAS X, Three Y=RAS Z, Three Z=-RAS Y (millimetres to metres).
+    const x = rx / 1000;
+    const y = rz / 1000;
+    const z = -ry / 1000;
     this._centroidWorld = new THREE.Vector3(x, y, z);
 
     // Pulsing torus ring marker
@@ -294,9 +294,9 @@ class NeuroVRViewer {
     const sGeo = new THREE.SphereGeometry(0.003, 12, 12);
     const sMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const sph  = new THREE.Mesh(sGeo, sMat);
-    sph.position.copy(this._centroidWorld);
+    sph.position.set(0, 0, 0);
     sph.renderOrder = 11;
-    this.scene.add(sph);
+    ring.add(sph);
   }
 
   focusTumor() {
@@ -737,6 +737,20 @@ class NeuroVRViewer {
 
   resetCamera() { this._fitCamera(); }
 
+  toggleOrbit() {
+    if (!this.controls) return null;
+    this.controls.enabled = !this.controls.enabled;
+    return this.controls.enabled;
+  }
+
+  setAutoRotate(enabled) {
+    if (!this.controls) return false;
+    this.controls.autoRotate = Boolean(enabled);
+    // Auto rotation requires OrbitControls to remain enabled.
+    if (enabled) this.controls.enabled = true;
+    return this.controls.autoRotate;
+  }
+
   hasMeshes() { return Object.keys(this._meshes).length > 0; }
 
   _clearMeshes() {
@@ -807,7 +821,11 @@ class NeuroVRViewer {
       this.renderer.xr.setSession(session);
       this._xrActive = true;
       Object.values(this._meshes).forEach(m => { if (m) m.position.set(0, 0, -0.3); });
-      session.addEventListener('end', () => { this._xrActive = false; this.resetCamera(); });
+      session.addEventListener('end', () => {
+        this._xrActive = false;
+        Object.values(this._meshes).forEach(m => { if (m) m.position.set(0, 0, 0); });
+        this.resetCamera();
+      });
     } catch (err) { alert('AR error: ' + err.message); }
   }
 
@@ -830,13 +848,37 @@ class NeuroVRViewer {
         g.add(cf.createControllerModel(g));
         this.scene.add(c, g);
       });
-      session.addEventListener('end', () => { this._xrActive = false; this.resetCamera(); });
+      session.addEventListener('end', () => {
+        this._xrActive = false;
+        Object.values(this._meshes).forEach(m => { if (m) m.position.set(0, 0, 0); });
+        this.resetCamera();
+      });
     } catch (err) { alert('VR error: ' + err.message); }
   }
 }
 
 // Bootstrap
 const canvas = document.getElementById('threeCanvas');
-const viewer = new NeuroVRViewer(canvas);
-viewer.init();
-window.viewer = viewer;
+try {
+  const viewer = new NeuroVRViewer(canvas);
+  viewer.init();
+  window.viewer = viewer;
+} catch (err) {
+  console.error('[NeuroVR] WebGL initialization failed:', err);
+  window.viewer = null;
+  const empty = document.getElementById('viewerEmpty');
+  if (empty) {
+    empty.style.display = 'flex';
+    const title = empty.querySelector('.viewer-empty-title');
+    const sub = empty.querySelector('.viewer-empty-sub');
+    if (title) title.textContent = '3D Viewer Unavailable';
+    if (sub) sub.textContent = 'WebGL could not be initialized. Enable hardware acceleration or use a supported browser.';
+  }
+  document.querySelectorAll('.viewer-toolbar button, #btnAR, #btnVR').forEach(button => {
+    button.disabled = true;
+  });
+  const status = document.getElementById('systemStatusText');
+  const dot = document.getElementById('systemDot');
+  if (status) status.textContent = 'WEBGL ERROR';
+  if (dot) dot.className = 'status-dot error';
+}

@@ -171,6 +171,21 @@ def load_brats_case(
             f"Found: {shapes}"
         )
 
+    # Equal array dimensions alone do not imply registration. Reject inputs
+    # whose voxel-to-world transforms differ, rather than rendering or
+    # segmenting spatially unrelated modalities as one case.
+    reference = volumes["t1"]
+    mismatched = []
+    for modality in REQUIRED_MODALITIES[1:]:
+        volume = volumes[modality]
+        if not np.allclose(volume["affine"], reference["affine"], rtol=1e-5, atol=1e-3):
+            mismatched.append(modality)
+    if mismatched:
+        raise ValueError(
+            "All modalities must share the same voxel-to-world affine. "
+            f"Misregistered relative to T1: {mismatched}"
+        )
+
     return volumes
 
 

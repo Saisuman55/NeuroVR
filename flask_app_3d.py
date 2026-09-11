@@ -337,6 +337,7 @@ def _run_pipeline_async(session_id: str) -> None:
         modality_volumes = load_brats_case(modality_paths)
 
         # ── Run or Load 3D segmentation ────────────────────────────────────────
+        uploads_dir = sess_dir / "uploads"
         gt_masks_path = uploads_dir / "ground_truth_masks.npz"
         if gt_masks_path.exists():
             _set_status(session_id, "running", 20, "Loading ground-truth masks...")
@@ -421,6 +422,7 @@ def _run_pipeline_async(session_id: str) -> None:
             voxel_spacing=seg_result["voxel_spacing"],
             output_dir=str(sess_dir),
             smoothing_iterations=_cfg("reconstruction.smoothing", 3),
+            affine=seg_result["affine"],
         )
 
         _set_status(session_id, "running", 92, "Generating brain surface...")
@@ -432,6 +434,7 @@ def _run_pipeline_async(session_id: str) -> None:
             modality_volumes["t1"]["data"],
             voxel_spacing=seg_result["voxel_spacing"],
             output_path=brain_path,
+            affine=seg_result["affine"],
             # step_size=1 by default (full resolution — preserves cortical gyri/sulci)
             # smoothing_iterations=2 by default (minimal — keeps surface folds)
         )
@@ -491,110 +494,43 @@ def get_status(session_id: str):
 # Routes: Results
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _classify_brats_tumor(data: dict) -> dict:
-    """Rule-based BraTS pattern classification.
-
-    Based on the BraTS challenge convention (Menze et al. 2015):
-      - Whole Tumor (WT) = all tumor classes (labels 1+2+4)
-      - Tumor Core (TC)  = necrosis + enhancing (labels 1+4)
-      - Enhancing Tumor (ET) = active enhancing region (label 4)
-
-    Heuristic classification rules (NOT clinical diagnosis):
-      ET + TC + WT  → High-Grade Glioma pattern (WHO Grade III–IV / GBM-like)
-      TC + WT, no ET → Low-Grade / Non-enhancing Glioma pattern (WHO Grade II–III)
-      WT only       → Non-enhancing or Metastasis-like pattern
-      None detected → No tumor segmented
-
-    Reference: Bakas et al. 2017, Nature Scientific Data; BraTS 2020 challenge.
-    This is a RESEARCH PROTOTYPE — NOT a clinical diagnostic tool.
-    """
-    summary = data.get("summary", {})
-    wt = summary.get("whole_tumor_detected", False)
-    tc = summary.get("tumor_core_detected", False)
-    et = summary.get("enhancing_tumor_detected", False)
-
-    wt_vol = summary.get("whole_tumor_volume_cm3", 0) or 0
-    tc_vol = summary.get("tumor_core_volume_cm3",  0) or 0
-    et_vol = summary.get("enhancing_tumor_volume_cm3", 0) or 0
-
-    # Core ratio: TC/WT  — High-grade tumors tend to have higher core ratio
-    core_ratio = (tc_vol / wt_vol) if wt_vol > 0 else 0
-    # Enhancing ratio: ET/TC
-    enh_ratio  = (et_vol / tc_vol) if tc_vol > 0 else 0
-
-    if not wt:
+def _tumor_classification_status(session_id: str) -> dict:
+    """Describe classifier availability without inferring diagnosis from masks."""
+    if session_id.startswith("demo-"):
         return {
-            "pattern":     "No Tumor Detected",
-            "who_grade":   None,
-            "subtype":     None,
-            "confidence":  "N/A",
-            "basis":       "No segmentation labels found",
-            "color":       "var(--text-muted)",
+            "pattern": "Synthetic Glioma-like Sample",
+            "who_grade": None,
+            "subtype": "Demonstration data — not an AI tumor-type prediction",
+            "confidence": None,
+            "basis": "The demo generator creates a synthetic BraTS-style glioma overlay for visualization testing.",
+            "color": "var(--accent-cyan)",
+            "disclaimer": "Demo label only. No tumor classification or clinical diagnosis was performed.",
+            "classification_available": False,
+            "is_demo_label": True,
         }
-
-    if et and tc and wt:
-        # Classic HGG / GBM pattern: all three components present
-        if enh_ratio > 0.4:
-            label    = "High-Grade Glioma Pattern"
-            subtype  = "Glioblastoma (GBM)-like (WHO Grade IV)"
-            grade    = "IV"
-            conf     = "Moderate"
-            color    = "var(--accent-red)"
-        else:
-            label    = "High-Grade Glioma Pattern"
-            subtype  = "Anaplastic Glioma-like (WHO Grade III–IV)"
-            grade    = "III–IV"
-            conf     = "Low–Moderate"
-            color    = "var(--accent-amber)"
-    elif tc and wt and not et:
-        # Non-enhancing core — LGG pattern
-        label    = "Low-Grade Glioma Pattern"
-        subtype  = "Non-Enhancing Glioma (WHO Grade II–III)"
-        grade    = "II–III"
-        conf     = "Low–Moderate"
-        color    = "var(--accent-cyan)"
-    else:
-        # WT only — infiltrative or cystic
-        label    = "Infiltrative / Non-Specific Pattern"
-        subtype  = "Non-Enhancing or Cystic Lesion"
-        grade    = "Indeterminate"
-        conf     = "Low"
-        color    = "var(--text-secondary)"
-
-    basis = (
-        f"BraTS pattern: WT={'✓' if wt else '✗'} ({wt_vol:.1f} cm³)  "
-        f"TC={'✓' if tc else '✗'} ({tc_vol:.1f} cm³)  "
-        f"ET={'✓' if et else '✗'} ({et_vol:.1f} cm³). "
-        f"Core ratio {core_ratio:.0%}, Enhancing ratio {enh_ratio:.0%}."
-    )
-
     return {
-        "pattern":     label,
-        "who_grade":   grade,
-        "subtype":     subtype,
-        "confidence":  conf,
-        "basis":       basis,
-        "color":       color,
-        "disclaimer":  (
-            "RESEARCH ESTIMATE ONLY. This classification is derived from "
-            "segmentation label patterns using BraTS challenge conventions — "
-            "NOT histopathological diagnosis. WHO grade requires biopsy and "
-            "molecular profiling. Consult a qualified neuro-oncologist."
-        ),
+        "pattern": "Classification unavailable",
+        "who_grade": None,
+        "subtype": "Segmentation model only",
+        "confidence": None,
+        "basis": "This application performs segmentation only; no validated tumor classifier is implemented.",
+        "color": "var(--text-muted)",
+        "disclaimer": "Tumor type and WHO grade require clinical and histopathological assessment.",
+        "classification_available": False,
+        "is_demo_label": False,
     }
 
 
 @app.route("/api/results/<session_id>")
 def get_results(session_id: str):
-    """Return measurements + BraTS-pattern tumor classification for a session."""
+    """Return measurements and an honest classifier-availability status."""
     meas_path = _session_dir(session_id) / "measurements.json"
     if not meas_path.exists():
         return jsonify({"error": "Results not ready."}), 404
     with open(meas_path) as f:
         data = json.load(f)
 
-    # Inject tumor type classification derived from segmentation pattern
-    data["tumor_type"] = _classify_brats_tumor(data)
+    data["tumor_type"] = _tumor_classification_status(session_id)
 
     return jsonify(data)
 

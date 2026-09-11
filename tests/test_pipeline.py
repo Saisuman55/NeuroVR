@@ -119,6 +119,20 @@ class TestNiftiLoader:
         with pytest.raises(ValueError, match="[Mm]issing"):
             load_brats_case(paths)
 
+    def test_load_brats_case_rejects_mismatched_affine(self, tmp_path):
+        """Equal-sized volumes in different patient spaces must be rejected."""
+        import nibabel as nib
+
+        paths = _make_four_modalities(str(tmp_path))
+        flair = nib.load(paths["flair"])
+        shifted = flair.affine.copy()
+        shifted[0, 3] += 20.0
+        nib.save(nib.Nifti1Image(flair.get_fdata(dtype=np.float32), shifted), paths["flair"])
+
+        from preprocessing.nifti_loader import load_brats_case
+        with pytest.raises(ValueError, match="voxel-to-world affine"):
+            load_brats_case(paths)
+
     def test_auto_detect_modalities(self, tmp_path):
         """Auto-detection should find all 4 modalities from filenames."""
         import nibabel as nib
@@ -194,6 +208,42 @@ class TestVolumePreprocessor:
 # ─── Reconstruction Tests ─────────────────────────────────────────────────────
 
 class TestReconstruction:
+    def test_postprocess_enforces_nested_regions(self):
+        """ET must be inside TC and TC inside WT after independent cleanup."""
+        from reconstruction.mask_processing import postprocess_masks
+
+        wt = np.zeros((24, 24, 24), dtype=np.uint8)
+        tc = np.zeros_like(wt)
+        et = np.zeros_like(wt)
+        wt[4:18, 4:18, 4:18] = 1
+        tc[8:16, 8:16, 8:16] = 1
+        et[14:20, 14:20, 14:20] = 1  # deliberately violates both parents
+
+        tc_c, wt_c, et_c = postprocess_masks(
+            tc, wt, et, min_component_size=1, apply_closing=False
+        )
+        assert not np.any(et_c.astype(bool) & ~tc_c.astype(bool))
+        assert not np.any(tc_c.astype(bool) & ~wt_c.astype(bool))
+
+        from reconstruction.measurements import compute_all_measurements
+        result = compute_all_measurements(tc_c, wt_c, et_c, np.ones(3))
+        assert result["spatial_validation"]["enhancing_inside_core"] is True
+        assert result["spatial_validation"]["core_inside_whole"] is True
+
+    def test_affine_is_applied_consistently_to_mesh(self):
+        """Mesh vertices should use patient RAS orientation and translation."""
+        pytest.importorskip("trimesh")
+        from reconstruction.tumor_mesh import mask_to_mesh
+
+        mask = np.zeros((12, 12, 12), dtype=np.uint8)
+        mask[4:8, 4:8, 4:8] = 1
+        affine = np.array([[-2, 0, 0, 90], [0, 2, 0, -126], [0, 0, 2, -72], [0, 0, 0, 1]], dtype=float)
+        mesh = mask_to_mesh(mask, np.array([2, 2, 2]), affine=affine, smoothing_iterations=0)
+        center = mesh.vertices.mean(axis=0)
+        expected_ras = (affine @ np.array([5.5, 5.5, 5.5, 1.0]))[:3]
+        expected_scene = np.array([expected_ras[0], expected_ras[2], -expected_ras[1]]) / 1000
+        assert np.allclose(center, expected_scene, atol=0.003)
+
     def test_mask_to_mesh_returns_mesh(self):
         """A non-empty mask should produce a trimesh object."""
         pytest.importorskip("trimesh")
