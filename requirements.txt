@@ -43,3 +43,9 @@ matplotlib>=3.7.0
 
 # ── MONAI model downloader ────────────────────────────────────────────────────
 huggingface_hub>=0.19.3,<0.25.0   # Used by scripts/download_bundle.py
+
+# ── Training pipeline additions ───────────────────────────────────────────────
+pandas>=2.0.0                 # Training history CSV export
+matplotlib>=3.7.0             # Training curve plots
+tensorboard>=2.14.0           # Optional TensorBoard logging
+pyyaml>=6.0                   # Config file parsing

@@ -77,11 +77,51 @@ webxr:
     - bounded-floor
     - hand-tracking
 
+# ── Dataset ───────────────────────────────────────────────────────────────────
+dataset:
+  # Path to BraTS training directory (override with BRATS_DATASET_PATH env var)
+  brats_path: data/raw/brats
+  # Patient-level split fractions (must sum to 1.0)
+  train_frac: 0.70
+  val_frac: 0.15
+  test_frac: 0.15
+  # Random seed for reproducible patient splitting
+  split_seed: 42
+
+# ── Training (2D U-Net) ────────────────────────────────────────────────────────
+training_2d:
+  epochs: 30
+  batch_size: 8
+  lr: 1.0e-3
+  weight_decay: 1.0e-5
+  loss: dice_ce          # dice | dice_ce | dice_focal
+  early_stopping: 10
+  patch_size: 240
+  orientation: axial
+  tumor_ratio: 0.6
+  output_dir: results/2d
+
+# ── Training (3D SegResNet) ────────────────────────────────────────────────────
+training_3d:
+  epochs: 50
+  batch_size: 1
+  lr: 1.0e-4
+  weight_decay: 1.0e-5
+  loss: dice_ce
+  early_stopping: 15
+  patch_size: "64,64,64"   # D,H,W
+  architecture: segresnet   # segresnet | unet3d
+  output_dir: results/3d
+  # Optional: path to pretrained MONAI bundle weights for fine-tuning
+  pretrained: null          # e.g. models/monai/brats_mri_segmentation/models/model.pt
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 paths:
   outputs: outputs
   models: models
   demo_data: data/real_brats
+  results_2d: results/2d
+  results_3d: results/3d
 
 # ── Server ─────────────────────────────────────────────────────────────────────
 server:

@@ -73,3 +73,14 @@ node_modules/
 
 # ── Archive (reference only — not deployed) ───────────────────────────────────
 archive/
+
+# ── Training outputs ──────────────────────────────────────────────────────────
+results/
+data/raw/
+data/splits.json
+*.pt
+!models/monai/**/*.pt
+
+# ── Dataset ───────────────────────────────────────────────────────────────────
+data/raw/
+data/training/msd_task01/
